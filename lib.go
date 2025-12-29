@@ -3,6 +3,7 @@ package main
 import (
 	"mini-pasuki2/app"
 
+	"github.com/joho/godotenv"
 	echo4 "github.com/labstack/echo/v4"
 	echo4middleware "github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -12,6 +13,10 @@ func run() {
 	echo := echo4.New()
 	echo.Use(echo4middleware.RequestLogger())
 	echo.Logger.SetLevel(log.INFO)
+
+	if err := godotenv.Load(); err != nil {
+		echo.Logger.Fatal(err)
+	}
 
 	app, err := app.NewApp()
 	if err != nil {
