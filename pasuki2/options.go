@@ -23,7 +23,7 @@ type AuthenticatorSelection struct {
 	UserVerification        string `json:"userVerification"`
 }
 
-type Options struct {
+type RegistrationOptions struct {
 	Challenge                 string                      `json:"challenge"`
 	Rp                        RelyingParty                `json:"rp"`
 	User                      User                        `json:"user"`
