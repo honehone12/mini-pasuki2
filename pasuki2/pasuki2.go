@@ -9,13 +9,16 @@ import (
 )
 
 const PUBLIC_KEY_TYPE = "public-key"
-const SIGNATURE_ALGORITHM_ES256 = -7 // i will not implement other than es256
+const (
+	SIGNATURE_ALGORITHM_ES256 = -7
+	SIGNATURE_ALGORITHM_RS256 = -257
+)
 
 const DEFAULT_TIME_OUT = 60000
 
 const ATTESTATION_NONE = "none" // i will not implement hardawre attestation
 
-const AUTHENTICATOR_PREFERED = "prefered" // leave to brower default
+const AUTHENTICATOR_PREFERED = "preferred" // leave to brower default
 
 type Pasuki2 struct {
 	passKeyClient *ent.PasskeyClient
@@ -67,6 +70,9 @@ func (p2 *Pasuki2) RegisterStart(
 		PublicKeyCredentialParams: []PublicKeyCredentialParams{{
 			Type: PUBLIC_KEY_TYPE,
 			Alg:  SIGNATURE_ALGORITHM_ES256,
+		}, {
+			Type: PUBLIC_KEY_TYPE,
+			Alg:  SIGNATURE_ALGORITHM_RS256,
 		}},
 		Timeout:     DEFAULT_TIME_OUT,
 		Attestation: ATTESTATION_NONE,

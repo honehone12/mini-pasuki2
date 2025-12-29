@@ -2,6 +2,7 @@ package main
 
 import (
 	"mini-pasuki2/app"
+	"net/url"
 
 	"github.com/joho/godotenv"
 	echo4 "github.com/labstack/echo/v4"
@@ -23,13 +24,21 @@ func run() {
 		echo.Logger.Fatal(err)
 	}
 
-	echo.Use(echo4middleware.CORSWithConfig(echo4middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:3000"},
-	}))
+	uiUrl, err := url.Parse("http://localhost:3000")
+	if err != nil {
+		echo.Logger.Fatal(err)
+	}
+
+	balancer := echo4middleware.NewRoundRobinBalancer(
+		[]*echo4middleware.ProxyTarget{{
+			Name: "ui",
+			URL:  uiUrl,
+		}})
+	echo.Use(echo4middleware.Proxy(balancer))
 
 	echo.POST("/api/passkey/register/start", app.RegisterStart)
 
-	if err := echo.Start("localhost:8081"); err != nil {
+	if err := echo.Start("localhost:8082"); err != nil {
 		echo.Logger.Fatal(err)
 	}
 }

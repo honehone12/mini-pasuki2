@@ -58,7 +58,7 @@ func (a *App) bind(ctx echo.Context, target any) error {
 }
 
 type RegisterStartRequest struct {
-	Email string `form:"string" validate:"required,email,max=256"`
+	Email string `form:"email" validate:"required,email,max=256"`
 }
 
 func (a *App) RegisterStart(ctx echo.Context) error {
