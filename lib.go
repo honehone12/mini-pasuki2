@@ -36,7 +36,7 @@ func run() {
 
 	echo.POST("/api/passkey/register/start", app.RegisterStart)
 
-	echo.Use(echo4middleware.Proxy(balancer))
+	echo.Group("/*", echo4middleware.Proxy(balancer))
 
 	if err := echo.Start("localhost:8082"); err != nil {
 		echo.Logger.Fatal(err)
