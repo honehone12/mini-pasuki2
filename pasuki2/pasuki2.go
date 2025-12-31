@@ -134,7 +134,9 @@ func (p2 *Pasuki2) RegisterFinish(
 	}
 
 	key := fmt.Sprintf("%s:%s", REDIS_REGISTRATION_CHALLENGE_KEY, p.Email)
-	cachedChal, err := p2.redis.Get(ctx, key).Result()
+	// we use getdel because passkey will never fail
+	// without malicious operation
+	cachedChal, err := p2.redis.GetDel(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
 		r.ValidationErr = err
 		return r
