@@ -36,6 +36,7 @@ func run() {
 		}})
 
 	echo.POST("/api/passkey/register/start", app.RegisterStart)
+	echo.POST("/api/passkey/register/finish", app.RegisterFinish)
 
 	echo.Group("/*", echo4middleware.Proxy(balancer))
 

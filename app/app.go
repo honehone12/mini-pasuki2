@@ -176,6 +176,7 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 	}
 
 	r := a.pasuki.RegisterFinish(c, pasuki2.RegisterFinishParams{
+		Email:             form.Email,
 		UserId:            u.ID,
 		Id:                form.Id,
 		Type:              form.Type,

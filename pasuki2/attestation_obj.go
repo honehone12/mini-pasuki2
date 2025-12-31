@@ -42,7 +42,7 @@ type RegistrationAttestationObject struct {
 	Aaguid              []byte
 	CredentialId        []byte
 	CredentialPublicKey []byte
-	Cose                Cose
+	CoseKey             CoseKey
 	Extensions          map[string]any
 }
 
@@ -101,7 +101,7 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 	credentialId := att.AuthData[p : p+credIdLen]
 	p += credIdLen
 
-	var rawPk []byte
+	var rawPk cbor.RawMessage
 	err = cbor.NewDecoder(bytes.NewReader(att.AuthData[p:])).
 		Decode(&rawPk)
 	if err != nil {
@@ -109,7 +109,7 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 	}
 	p += len(rawPk)
 
-	cose, err := parseCose(rawPk)
+	cose, err := parseCoseKey(rawPk)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 			return nil, errors.New("auth data is not enough for extension data")
 		}
 
-		var rawExt []byte
+		var rawExt cbor.RawMessage
 		err = cbor.NewDecoder(bytes.NewReader(att.AuthData[:p])).
 			Decode(&rawExt)
 		if err != nil {
@@ -146,7 +146,7 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 		Aaguid:              aaguid,
 		CredentialId:        credentialId,
 		CredentialPublicKey: rawPk,
-		Cose:                cose,
+		CoseKey:             cose,
 		Extensions:          extensions,
 	}
 
