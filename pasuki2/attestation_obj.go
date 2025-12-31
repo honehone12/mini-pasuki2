@@ -110,7 +110,7 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 	}
 	p += len(rawPk)
 
-	cose, err := parseCoseKey(rawPk)
+	coseKey, err := parseCoseKey(rawPk)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 		Aaguid:              aaguid,
 		CredentialId:        credentialId,
 		CredentialPublicKey: rawPk,
-		CoseKey:             cose,
+		CoseKey:             coseKey,
 		ExtBit:              extBit,
 		Extensions:          extensions,
 	}

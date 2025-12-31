@@ -71,6 +71,56 @@ func DeletedAt(v time.Time) predicate.Passkey {
 	return predicate.Passkey(sql.FieldEQ(FieldDeletedAt, v))
 }
 
+// Origin applies equality check predicate on the "origin" field. It's identical to OriginEQ.
+func Origin(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldOrigin, v))
+}
+
+// CrossOrigin applies equality check predicate on the "cross_origin" field. It's identical to CrossOriginEQ.
+func CrossOrigin(v bool) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldCrossOrigin, v))
+}
+
+// TopOrigin applies equality check predicate on the "top_origin" field. It's identical to TopOriginEQ.
+func TopOrigin(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldTopOrigin, v))
+}
+
+// BackupEligibilityBit applies equality check predicate on the "backup_eligibility_bit" field. It's identical to BackupEligibilityBitEQ.
+func BackupEligibilityBit(v bool) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldBackupEligibilityBit, v))
+}
+
+// BackupStateBit applies equality check predicate on the "backup_state_bit" field. It's identical to BackupStateBitEQ.
+func BackupStateBit(v bool) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldBackupStateBit, v))
+}
+
+// SignCount applies equality check predicate on the "sign_count" field. It's identical to SignCountEQ.
+func SignCount(v uint32) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldSignCount, v))
+}
+
+// Aaguid applies equality check predicate on the "aaguid" field. It's identical to AaguidEQ.
+func Aaguid(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldAaguid, v))
+}
+
+// CredentialID applies equality check predicate on the "credential_id" field. It's identical to CredentialIDEQ.
+func CredentialID(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldCredentialID, v))
+}
+
+// PublicKey applies equality check predicate on the "public_key" field. It's identical to PublicKeyEQ.
+func PublicKey(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldPublicKey, v))
+}
+
+// ExtensionBit applies equality check predicate on the "extension_bit" field. It's identical to ExtensionBitEQ.
+func ExtensionBit(v bool) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldExtensionBit, v))
+}
+
 // UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
 func UserID(v binid.BinId) predicate.Passkey {
 	return predicate.Passkey(sql.FieldEQ(FieldUserID, v))
@@ -204,6 +254,356 @@ func DeletedAtIsNil() predicate.Passkey {
 // DeletedAtNotNil applies the NotNil predicate on the "deleted_at" field.
 func DeletedAtNotNil() predicate.Passkey {
 	return predicate.Passkey(sql.FieldNotNull(FieldDeletedAt))
+}
+
+// OriginEQ applies the EQ predicate on the "origin" field.
+func OriginEQ(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldOrigin, v))
+}
+
+// OriginNEQ applies the NEQ predicate on the "origin" field.
+func OriginNEQ(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNEQ(FieldOrigin, v))
+}
+
+// OriginIn applies the In predicate on the "origin" field.
+func OriginIn(vs ...string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldIn(FieldOrigin, vs...))
+}
+
+// OriginNotIn applies the NotIn predicate on the "origin" field.
+func OriginNotIn(vs ...string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNotIn(FieldOrigin, vs...))
+}
+
+// OriginGT applies the GT predicate on the "origin" field.
+func OriginGT(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldGT(FieldOrigin, v))
+}
+
+// OriginGTE applies the GTE predicate on the "origin" field.
+func OriginGTE(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldGTE(FieldOrigin, v))
+}
+
+// OriginLT applies the LT predicate on the "origin" field.
+func OriginLT(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldLT(FieldOrigin, v))
+}
+
+// OriginLTE applies the LTE predicate on the "origin" field.
+func OriginLTE(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldLTE(FieldOrigin, v))
+}
+
+// OriginContains applies the Contains predicate on the "origin" field.
+func OriginContains(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldContains(FieldOrigin, v))
+}
+
+// OriginHasPrefix applies the HasPrefix predicate on the "origin" field.
+func OriginHasPrefix(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldHasPrefix(FieldOrigin, v))
+}
+
+// OriginHasSuffix applies the HasSuffix predicate on the "origin" field.
+func OriginHasSuffix(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldHasSuffix(FieldOrigin, v))
+}
+
+// OriginEqualFold applies the EqualFold predicate on the "origin" field.
+func OriginEqualFold(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEqualFold(FieldOrigin, v))
+}
+
+// OriginContainsFold applies the ContainsFold predicate on the "origin" field.
+func OriginContainsFold(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldContainsFold(FieldOrigin, v))
+}
+
+// CrossOriginEQ applies the EQ predicate on the "cross_origin" field.
+func CrossOriginEQ(v bool) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldCrossOrigin, v))
+}
+
+// CrossOriginNEQ applies the NEQ predicate on the "cross_origin" field.
+func CrossOriginNEQ(v bool) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNEQ(FieldCrossOrigin, v))
+}
+
+// TopOriginEQ applies the EQ predicate on the "top_origin" field.
+func TopOriginEQ(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldTopOrigin, v))
+}
+
+// TopOriginNEQ applies the NEQ predicate on the "top_origin" field.
+func TopOriginNEQ(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNEQ(FieldTopOrigin, v))
+}
+
+// TopOriginIn applies the In predicate on the "top_origin" field.
+func TopOriginIn(vs ...string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldIn(FieldTopOrigin, vs...))
+}
+
+// TopOriginNotIn applies the NotIn predicate on the "top_origin" field.
+func TopOriginNotIn(vs ...string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNotIn(FieldTopOrigin, vs...))
+}
+
+// TopOriginGT applies the GT predicate on the "top_origin" field.
+func TopOriginGT(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldGT(FieldTopOrigin, v))
+}
+
+// TopOriginGTE applies the GTE predicate on the "top_origin" field.
+func TopOriginGTE(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldGTE(FieldTopOrigin, v))
+}
+
+// TopOriginLT applies the LT predicate on the "top_origin" field.
+func TopOriginLT(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldLT(FieldTopOrigin, v))
+}
+
+// TopOriginLTE applies the LTE predicate on the "top_origin" field.
+func TopOriginLTE(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldLTE(FieldTopOrigin, v))
+}
+
+// TopOriginContains applies the Contains predicate on the "top_origin" field.
+func TopOriginContains(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldContains(FieldTopOrigin, v))
+}
+
+// TopOriginHasPrefix applies the HasPrefix predicate on the "top_origin" field.
+func TopOriginHasPrefix(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldHasPrefix(FieldTopOrigin, v))
+}
+
+// TopOriginHasSuffix applies the HasSuffix predicate on the "top_origin" field.
+func TopOriginHasSuffix(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldHasSuffix(FieldTopOrigin, v))
+}
+
+// TopOriginEqualFold applies the EqualFold predicate on the "top_origin" field.
+func TopOriginEqualFold(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEqualFold(FieldTopOrigin, v))
+}
+
+// TopOriginContainsFold applies the ContainsFold predicate on the "top_origin" field.
+func TopOriginContainsFold(v string) predicate.Passkey {
+	return predicate.Passkey(sql.FieldContainsFold(FieldTopOrigin, v))
+}
+
+// AttestationFmtEQ applies the EQ predicate on the "attestation_fmt" field.
+func AttestationFmtEQ(v AttestationFmt) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldAttestationFmt, v))
+}
+
+// AttestationFmtNEQ applies the NEQ predicate on the "attestation_fmt" field.
+func AttestationFmtNEQ(v AttestationFmt) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNEQ(FieldAttestationFmt, v))
+}
+
+// AttestationFmtIn applies the In predicate on the "attestation_fmt" field.
+func AttestationFmtIn(vs ...AttestationFmt) predicate.Passkey {
+	return predicate.Passkey(sql.FieldIn(FieldAttestationFmt, vs...))
+}
+
+// AttestationFmtNotIn applies the NotIn predicate on the "attestation_fmt" field.
+func AttestationFmtNotIn(vs ...AttestationFmt) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNotIn(FieldAttestationFmt, vs...))
+}
+
+// BackupEligibilityBitEQ applies the EQ predicate on the "backup_eligibility_bit" field.
+func BackupEligibilityBitEQ(v bool) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldBackupEligibilityBit, v))
+}
+
+// BackupEligibilityBitNEQ applies the NEQ predicate on the "backup_eligibility_bit" field.
+func BackupEligibilityBitNEQ(v bool) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNEQ(FieldBackupEligibilityBit, v))
+}
+
+// BackupStateBitEQ applies the EQ predicate on the "backup_state_bit" field.
+func BackupStateBitEQ(v bool) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldBackupStateBit, v))
+}
+
+// BackupStateBitNEQ applies the NEQ predicate on the "backup_state_bit" field.
+func BackupStateBitNEQ(v bool) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNEQ(FieldBackupStateBit, v))
+}
+
+// SignCountEQ applies the EQ predicate on the "sign_count" field.
+func SignCountEQ(v uint32) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldSignCount, v))
+}
+
+// SignCountNEQ applies the NEQ predicate on the "sign_count" field.
+func SignCountNEQ(v uint32) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNEQ(FieldSignCount, v))
+}
+
+// SignCountIn applies the In predicate on the "sign_count" field.
+func SignCountIn(vs ...uint32) predicate.Passkey {
+	return predicate.Passkey(sql.FieldIn(FieldSignCount, vs...))
+}
+
+// SignCountNotIn applies the NotIn predicate on the "sign_count" field.
+func SignCountNotIn(vs ...uint32) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNotIn(FieldSignCount, vs...))
+}
+
+// SignCountGT applies the GT predicate on the "sign_count" field.
+func SignCountGT(v uint32) predicate.Passkey {
+	return predicate.Passkey(sql.FieldGT(FieldSignCount, v))
+}
+
+// SignCountGTE applies the GTE predicate on the "sign_count" field.
+func SignCountGTE(v uint32) predicate.Passkey {
+	return predicate.Passkey(sql.FieldGTE(FieldSignCount, v))
+}
+
+// SignCountLT applies the LT predicate on the "sign_count" field.
+func SignCountLT(v uint32) predicate.Passkey {
+	return predicate.Passkey(sql.FieldLT(FieldSignCount, v))
+}
+
+// SignCountLTE applies the LTE predicate on the "sign_count" field.
+func SignCountLTE(v uint32) predicate.Passkey {
+	return predicate.Passkey(sql.FieldLTE(FieldSignCount, v))
+}
+
+// AaguidEQ applies the EQ predicate on the "aaguid" field.
+func AaguidEQ(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldAaguid, v))
+}
+
+// AaguidNEQ applies the NEQ predicate on the "aaguid" field.
+func AaguidNEQ(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNEQ(FieldAaguid, v))
+}
+
+// AaguidIn applies the In predicate on the "aaguid" field.
+func AaguidIn(vs ...[]byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldIn(FieldAaguid, vs...))
+}
+
+// AaguidNotIn applies the NotIn predicate on the "aaguid" field.
+func AaguidNotIn(vs ...[]byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNotIn(FieldAaguid, vs...))
+}
+
+// AaguidGT applies the GT predicate on the "aaguid" field.
+func AaguidGT(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldGT(FieldAaguid, v))
+}
+
+// AaguidGTE applies the GTE predicate on the "aaguid" field.
+func AaguidGTE(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldGTE(FieldAaguid, v))
+}
+
+// AaguidLT applies the LT predicate on the "aaguid" field.
+func AaguidLT(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldLT(FieldAaguid, v))
+}
+
+// AaguidLTE applies the LTE predicate on the "aaguid" field.
+func AaguidLTE(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldLTE(FieldAaguid, v))
+}
+
+// CredentialIDEQ applies the EQ predicate on the "credential_id" field.
+func CredentialIDEQ(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldCredentialID, v))
+}
+
+// CredentialIDNEQ applies the NEQ predicate on the "credential_id" field.
+func CredentialIDNEQ(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNEQ(FieldCredentialID, v))
+}
+
+// CredentialIDIn applies the In predicate on the "credential_id" field.
+func CredentialIDIn(vs ...[]byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldIn(FieldCredentialID, vs...))
+}
+
+// CredentialIDNotIn applies the NotIn predicate on the "credential_id" field.
+func CredentialIDNotIn(vs ...[]byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNotIn(FieldCredentialID, vs...))
+}
+
+// CredentialIDGT applies the GT predicate on the "credential_id" field.
+func CredentialIDGT(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldGT(FieldCredentialID, v))
+}
+
+// CredentialIDGTE applies the GTE predicate on the "credential_id" field.
+func CredentialIDGTE(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldGTE(FieldCredentialID, v))
+}
+
+// CredentialIDLT applies the LT predicate on the "credential_id" field.
+func CredentialIDLT(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldLT(FieldCredentialID, v))
+}
+
+// CredentialIDLTE applies the LTE predicate on the "credential_id" field.
+func CredentialIDLTE(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldLTE(FieldCredentialID, v))
+}
+
+// PublicKeyEQ applies the EQ predicate on the "public_key" field.
+func PublicKeyEQ(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldPublicKey, v))
+}
+
+// PublicKeyNEQ applies the NEQ predicate on the "public_key" field.
+func PublicKeyNEQ(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNEQ(FieldPublicKey, v))
+}
+
+// PublicKeyIn applies the In predicate on the "public_key" field.
+func PublicKeyIn(vs ...[]byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldIn(FieldPublicKey, vs...))
+}
+
+// PublicKeyNotIn applies the NotIn predicate on the "public_key" field.
+func PublicKeyNotIn(vs ...[]byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNotIn(FieldPublicKey, vs...))
+}
+
+// PublicKeyGT applies the GT predicate on the "public_key" field.
+func PublicKeyGT(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldGT(FieldPublicKey, v))
+}
+
+// PublicKeyGTE applies the GTE predicate on the "public_key" field.
+func PublicKeyGTE(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldGTE(FieldPublicKey, v))
+}
+
+// PublicKeyLT applies the LT predicate on the "public_key" field.
+func PublicKeyLT(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldLT(FieldPublicKey, v))
+}
+
+// PublicKeyLTE applies the LTE predicate on the "public_key" field.
+func PublicKeyLTE(v []byte) predicate.Passkey {
+	return predicate.Passkey(sql.FieldLTE(FieldPublicKey, v))
+}
+
+// ExtensionBitEQ applies the EQ predicate on the "extension_bit" field.
+func ExtensionBitEQ(v bool) predicate.Passkey {
+	return predicate.Passkey(sql.FieldEQ(FieldExtensionBit, v))
+}
+
+// ExtensionBitNEQ applies the NEQ predicate on the "extension_bit" field.
+func ExtensionBitNEQ(v bool) predicate.Passkey {
+	return predicate.Passkey(sql.FieldNEQ(FieldExtensionBit, v))
 }
 
 // UserIDEQ applies the EQ predicate on the "user_id" field.

@@ -64,6 +64,72 @@ func (_c *PasskeyCreate) SetNillableDeletedAt(v *time.Time) *PasskeyCreate {
 	return _c
 }
 
+// SetOrigin sets the "origin" field.
+func (_c *PasskeyCreate) SetOrigin(v string) *PasskeyCreate {
+	_c.mutation.SetOrigin(v)
+	return _c
+}
+
+// SetCrossOrigin sets the "cross_origin" field.
+func (_c *PasskeyCreate) SetCrossOrigin(v bool) *PasskeyCreate {
+	_c.mutation.SetCrossOrigin(v)
+	return _c
+}
+
+// SetTopOrigin sets the "top_origin" field.
+func (_c *PasskeyCreate) SetTopOrigin(v string) *PasskeyCreate {
+	_c.mutation.SetTopOrigin(v)
+	return _c
+}
+
+// SetAttestationFmt sets the "attestation_fmt" field.
+func (_c *PasskeyCreate) SetAttestationFmt(v passkey.AttestationFmt) *PasskeyCreate {
+	_c.mutation.SetAttestationFmt(v)
+	return _c
+}
+
+// SetBackupEligibilityBit sets the "backup_eligibility_bit" field.
+func (_c *PasskeyCreate) SetBackupEligibilityBit(v bool) *PasskeyCreate {
+	_c.mutation.SetBackupEligibilityBit(v)
+	return _c
+}
+
+// SetBackupStateBit sets the "backup_state_bit" field.
+func (_c *PasskeyCreate) SetBackupStateBit(v bool) *PasskeyCreate {
+	_c.mutation.SetBackupStateBit(v)
+	return _c
+}
+
+// SetSignCount sets the "sign_count" field.
+func (_c *PasskeyCreate) SetSignCount(v uint32) *PasskeyCreate {
+	_c.mutation.SetSignCount(v)
+	return _c
+}
+
+// SetAaguid sets the "aaguid" field.
+func (_c *PasskeyCreate) SetAaguid(v []byte) *PasskeyCreate {
+	_c.mutation.SetAaguid(v)
+	return _c
+}
+
+// SetCredentialID sets the "credential_id" field.
+func (_c *PasskeyCreate) SetCredentialID(v []byte) *PasskeyCreate {
+	_c.mutation.SetCredentialID(v)
+	return _c
+}
+
+// SetPublicKey sets the "public_key" field.
+func (_c *PasskeyCreate) SetPublicKey(v []byte) *PasskeyCreate {
+	_c.mutation.SetPublicKey(v)
+	return _c
+}
+
+// SetExtensionBit sets the "extension_bit" field.
+func (_c *PasskeyCreate) SetExtensionBit(v bool) *PasskeyCreate {
+	_c.mutation.SetExtensionBit(v)
+	return _c
+}
+
 // SetUserID sets the "user_id" field.
 func (_c *PasskeyCreate) SetUserID(v binid.BinId) *PasskeyCreate {
 	_c.mutation.SetUserID(v)
@@ -134,6 +200,69 @@ func (_c *PasskeyCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Passkey.updated_at"`)}
 	}
+	if _, ok := _c.mutation.Origin(); !ok {
+		return &ValidationError{Name: "origin", err: errors.New(`ent: missing required field "Passkey.origin"`)}
+	}
+	if v, ok := _c.mutation.Origin(); ok {
+		if err := passkey.OriginValidator(v); err != nil {
+			return &ValidationError{Name: "origin", err: fmt.Errorf(`ent: validator failed for field "Passkey.origin": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.CrossOrigin(); !ok {
+		return &ValidationError{Name: "cross_origin", err: errors.New(`ent: missing required field "Passkey.cross_origin"`)}
+	}
+	if _, ok := _c.mutation.TopOrigin(); !ok {
+		return &ValidationError{Name: "top_origin", err: errors.New(`ent: missing required field "Passkey.top_origin"`)}
+	}
+	if v, ok := _c.mutation.TopOrigin(); ok {
+		if err := passkey.TopOriginValidator(v); err != nil {
+			return &ValidationError{Name: "top_origin", err: fmt.Errorf(`ent: validator failed for field "Passkey.top_origin": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.AttestationFmt(); !ok {
+		return &ValidationError{Name: "attestation_fmt", err: errors.New(`ent: missing required field "Passkey.attestation_fmt"`)}
+	}
+	if v, ok := _c.mutation.AttestationFmt(); ok {
+		if err := passkey.AttestationFmtValidator(v); err != nil {
+			return &ValidationError{Name: "attestation_fmt", err: fmt.Errorf(`ent: validator failed for field "Passkey.attestation_fmt": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.BackupEligibilityBit(); !ok {
+		return &ValidationError{Name: "backup_eligibility_bit", err: errors.New(`ent: missing required field "Passkey.backup_eligibility_bit"`)}
+	}
+	if _, ok := _c.mutation.BackupStateBit(); !ok {
+		return &ValidationError{Name: "backup_state_bit", err: errors.New(`ent: missing required field "Passkey.backup_state_bit"`)}
+	}
+	if _, ok := _c.mutation.SignCount(); !ok {
+		return &ValidationError{Name: "sign_count", err: errors.New(`ent: missing required field "Passkey.sign_count"`)}
+	}
+	if _, ok := _c.mutation.Aaguid(); !ok {
+		return &ValidationError{Name: "aaguid", err: errors.New(`ent: missing required field "Passkey.aaguid"`)}
+	}
+	if v, ok := _c.mutation.Aaguid(); ok {
+		if err := passkey.AaguidValidator(v); err != nil {
+			return &ValidationError{Name: "aaguid", err: fmt.Errorf(`ent: validator failed for field "Passkey.aaguid": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.CredentialID(); !ok {
+		return &ValidationError{Name: "credential_id", err: errors.New(`ent: missing required field "Passkey.credential_id"`)}
+	}
+	if v, ok := _c.mutation.CredentialID(); ok {
+		if err := passkey.CredentialIDValidator(v); err != nil {
+			return &ValidationError{Name: "credential_id", err: fmt.Errorf(`ent: validator failed for field "Passkey.credential_id": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.PublicKey(); !ok {
+		return &ValidationError{Name: "public_key", err: errors.New(`ent: missing required field "Passkey.public_key"`)}
+	}
+	if v, ok := _c.mutation.PublicKey(); ok {
+		if err := passkey.PublicKeyValidator(v); err != nil {
+			return &ValidationError{Name: "public_key", err: fmt.Errorf(`ent: validator failed for field "Passkey.public_key": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.ExtensionBit(); !ok {
+		return &ValidationError{Name: "extension_bit", err: errors.New(`ent: missing required field "Passkey.extension_bit"`)}
+	}
 	if _, ok := _c.mutation.UserID(); !ok {
 		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Passkey.user_id"`)}
 	}
@@ -186,6 +315,50 @@ func (_c *PasskeyCreate) createSpec() (*Passkey, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DeletedAt(); ok {
 		_spec.SetField(passkey.FieldDeletedAt, field.TypeTime, value)
 		_node.DeletedAt = &value
+	}
+	if value, ok := _c.mutation.Origin(); ok {
+		_spec.SetField(passkey.FieldOrigin, field.TypeString, value)
+		_node.Origin = value
+	}
+	if value, ok := _c.mutation.CrossOrigin(); ok {
+		_spec.SetField(passkey.FieldCrossOrigin, field.TypeBool, value)
+		_node.CrossOrigin = value
+	}
+	if value, ok := _c.mutation.TopOrigin(); ok {
+		_spec.SetField(passkey.FieldTopOrigin, field.TypeString, value)
+		_node.TopOrigin = value
+	}
+	if value, ok := _c.mutation.AttestationFmt(); ok {
+		_spec.SetField(passkey.FieldAttestationFmt, field.TypeEnum, value)
+		_node.AttestationFmt = value
+	}
+	if value, ok := _c.mutation.BackupEligibilityBit(); ok {
+		_spec.SetField(passkey.FieldBackupEligibilityBit, field.TypeBool, value)
+		_node.BackupEligibilityBit = value
+	}
+	if value, ok := _c.mutation.BackupStateBit(); ok {
+		_spec.SetField(passkey.FieldBackupStateBit, field.TypeBool, value)
+		_node.BackupStateBit = value
+	}
+	if value, ok := _c.mutation.SignCount(); ok {
+		_spec.SetField(passkey.FieldSignCount, field.TypeUint32, value)
+		_node.SignCount = value
+	}
+	if value, ok := _c.mutation.Aaguid(); ok {
+		_spec.SetField(passkey.FieldAaguid, field.TypeBytes, value)
+		_node.Aaguid = value
+	}
+	if value, ok := _c.mutation.CredentialID(); ok {
+		_spec.SetField(passkey.FieldCredentialID, field.TypeBytes, value)
+		_node.CredentialID = value
+	}
+	if value, ok := _c.mutation.PublicKey(); ok {
+		_spec.SetField(passkey.FieldPublicKey, field.TypeBytes, value)
+		_node.PublicKey = value
+	}
+	if value, ok := _c.mutation.ExtensionBit(); ok {
+		_spec.SetField(passkey.FieldExtensionBit, field.TypeBool, value)
+		_node.ExtensionBit = value
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

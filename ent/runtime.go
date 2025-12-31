@@ -28,6 +28,96 @@ func init() {
 	passkey.DefaultUpdatedAt = passkeyDescUpdatedAt.Default.(func() time.Time)
 	// passkey.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	passkey.UpdateDefaultUpdatedAt = passkeyDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// passkeyDescOrigin is the schema descriptor for origin field.
+	passkeyDescOrigin := passkeyFields[1].Descriptor()
+	// passkey.OriginValidator is a validator for the "origin" field. It is called by the builders before save.
+	passkey.OriginValidator = func() func(string) error {
+		validators := passkeyDescOrigin.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(origin string) error {
+			for _, fn := range fns {
+				if err := fn(origin); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// passkeyDescTopOrigin is the schema descriptor for top_origin field.
+	passkeyDescTopOrigin := passkeyFields[3].Descriptor()
+	// passkey.TopOriginValidator is a validator for the "top_origin" field. It is called by the builders before save.
+	passkey.TopOriginValidator = func() func(string) error {
+		validators := passkeyDescTopOrigin.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(top_origin string) error {
+			for _, fn := range fns {
+				if err := fn(top_origin); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// passkeyDescAaguid is the schema descriptor for aaguid field.
+	passkeyDescAaguid := passkeyFields[8].Descriptor()
+	// passkey.AaguidValidator is a validator for the "aaguid" field. It is called by the builders before save.
+	passkey.AaguidValidator = func() func([]byte) error {
+		validators := passkeyDescAaguid.Validators
+		fns := [...]func([]byte) error{
+			validators[0].(func([]byte) error),
+			validators[1].(func([]byte) error),
+		}
+		return func(aaguid []byte) error {
+			for _, fn := range fns {
+				if err := fn(aaguid); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// passkeyDescCredentialID is the schema descriptor for credential_id field.
+	passkeyDescCredentialID := passkeyFields[9].Descriptor()
+	// passkey.CredentialIDValidator is a validator for the "credential_id" field. It is called by the builders before save.
+	passkey.CredentialIDValidator = func() func([]byte) error {
+		validators := passkeyDescCredentialID.Validators
+		fns := [...]func([]byte) error{
+			validators[0].(func([]byte) error),
+			validators[1].(func([]byte) error),
+		}
+		return func(credential_id []byte) error {
+			for _, fn := range fns {
+				if err := fn(credential_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// passkeyDescPublicKey is the schema descriptor for public_key field.
+	passkeyDescPublicKey := passkeyFields[10].Descriptor()
+	// passkey.PublicKeyValidator is a validator for the "public_key" field. It is called by the builders before save.
+	passkey.PublicKeyValidator = func() func([]byte) error {
+		validators := passkeyDescPublicKey.Validators
+		fns := [...]func([]byte) error{
+			validators[0].(func([]byte) error),
+			validators[1].(func([]byte) error),
+		}
+		return func(public_key []byte) error {
+			for _, fn := range fns {
+				if err := fn(public_key); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0

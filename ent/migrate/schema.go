@@ -14,6 +14,17 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "origin", Type: field.TypeString, Size: 256},
+		{Name: "cross_origin", Type: field.TypeBool},
+		{Name: "top_origin", Type: field.TypeString, Size: 256},
+		{Name: "attestation_fmt", Type: field.TypeEnum, Enums: []string{"none", "packed", "tpm"}},
+		{Name: "backup_eligibility_bit", Type: field.TypeBool},
+		{Name: "backup_state_bit", Type: field.TypeBool},
+		{Name: "sign_count", Type: field.TypeUint32},
+		{Name: "aaguid", Type: field.TypeBytes, Size: 16, SchemaType: map[string]string{"mysql": "binary(16)"}},
+		{Name: "credential_id", Type: field.TypeBytes, Unique: true, Size: 32},
+		{Name: "public_key", Type: field.TypeBytes, Unique: true, Size: 2024},
+		{Name: "extension_bit", Type: field.TypeBool},
 		{Name: "user_id", Type: field.TypeUUID, SchemaType: map[string]string{"mysql": "binary(16)"}},
 	}
 	// PasskeysTable holds the schema information for the "passkeys" table.
@@ -24,7 +35,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "passkeys_users_passkeys",
-				Columns:    []*schema.Column{PasskeysColumns[4]},
+				Columns:    []*schema.Column{PasskeysColumns[15]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

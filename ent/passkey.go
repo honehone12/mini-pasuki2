@@ -25,6 +25,28 @@ type Passkey struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// DeletedAt holds the value of the "deleted_at" field.
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
+	// Origin holds the value of the "origin" field.
+	Origin string `json:"origin,omitempty"`
+	// CrossOrigin holds the value of the "cross_origin" field.
+	CrossOrigin bool `json:"cross_origin,omitempty"`
+	// TopOrigin holds the value of the "top_origin" field.
+	TopOrigin string `json:"top_origin,omitempty"`
+	// AttestationFmt holds the value of the "attestation_fmt" field.
+	AttestationFmt passkey.AttestationFmt `json:"attestation_fmt,omitempty"`
+	// BackupEligibilityBit holds the value of the "backup_eligibility_bit" field.
+	BackupEligibilityBit bool `json:"backup_eligibility_bit,omitempty"`
+	// BackupStateBit holds the value of the "backup_state_bit" field.
+	BackupStateBit bool `json:"backup_state_bit,omitempty"`
+	// SignCount holds the value of the "sign_count" field.
+	SignCount uint32 `json:"sign_count,omitempty"`
+	// Aaguid holds the value of the "aaguid" field.
+	Aaguid []byte `json:"aaguid,omitempty"`
+	// CredentialID holds the value of the "credential_id" field.
+	CredentialID []byte `json:"credential_id,omitempty"`
+	// PublicKey holds the value of the "public_key" field.
+	PublicKey []byte `json:"public_key,omitempty"`
+	// ExtensionBit holds the value of the "extension_bit" field.
+	ExtensionBit bool `json:"extension_bit,omitempty"`
 	// UserID holds the value of the "user_id" field.
 	UserID binid.BinId `json:"user_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -58,8 +80,16 @@ func (*Passkey) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case passkey.FieldAaguid, passkey.FieldCredentialID, passkey.FieldPublicKey:
+			values[i] = new([]byte)
 		case passkey.FieldID, passkey.FieldUserID:
 			values[i] = new(binid.BinId)
+		case passkey.FieldCrossOrigin, passkey.FieldBackupEligibilityBit, passkey.FieldBackupStateBit, passkey.FieldExtensionBit:
+			values[i] = new(sql.NullBool)
+		case passkey.FieldSignCount:
+			values[i] = new(sql.NullInt64)
+		case passkey.FieldOrigin, passkey.FieldTopOrigin, passkey.FieldAttestationFmt:
+			values[i] = new(sql.NullString)
 		case passkey.FieldCreatedAt, passkey.FieldUpdatedAt, passkey.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
 		default:
@@ -101,6 +131,72 @@ func (_m *Passkey) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.DeletedAt = new(time.Time)
 				*_m.DeletedAt = value.Time
+			}
+		case passkey.FieldOrigin:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field origin", values[i])
+			} else if value.Valid {
+				_m.Origin = value.String
+			}
+		case passkey.FieldCrossOrigin:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field cross_origin", values[i])
+			} else if value.Valid {
+				_m.CrossOrigin = value.Bool
+			}
+		case passkey.FieldTopOrigin:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field top_origin", values[i])
+			} else if value.Valid {
+				_m.TopOrigin = value.String
+			}
+		case passkey.FieldAttestationFmt:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field attestation_fmt", values[i])
+			} else if value.Valid {
+				_m.AttestationFmt = passkey.AttestationFmt(value.String)
+			}
+		case passkey.FieldBackupEligibilityBit:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field backup_eligibility_bit", values[i])
+			} else if value.Valid {
+				_m.BackupEligibilityBit = value.Bool
+			}
+		case passkey.FieldBackupStateBit:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field backup_state_bit", values[i])
+			} else if value.Valid {
+				_m.BackupStateBit = value.Bool
+			}
+		case passkey.FieldSignCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field sign_count", values[i])
+			} else if value.Valid {
+				_m.SignCount = uint32(value.Int64)
+			}
+		case passkey.FieldAaguid:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field aaguid", values[i])
+			} else if value != nil {
+				_m.Aaguid = *value
+			}
+		case passkey.FieldCredentialID:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field credential_id", values[i])
+			} else if value != nil {
+				_m.CredentialID = *value
+			}
+		case passkey.FieldPublicKey:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field public_key", values[i])
+			} else if value != nil {
+				_m.PublicKey = *value
+			}
+		case passkey.FieldExtensionBit:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field extension_bit", values[i])
+			} else if value.Valid {
+				_m.ExtensionBit = value.Bool
 			}
 		case passkey.FieldUserID:
 			if value, ok := values[i].(*binid.BinId); !ok {
@@ -159,6 +255,39 @@ func (_m *Passkey) String() string {
 		builder.WriteString("deleted_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("origin=")
+	builder.WriteString(_m.Origin)
+	builder.WriteString(", ")
+	builder.WriteString("cross_origin=")
+	builder.WriteString(fmt.Sprintf("%v", _m.CrossOrigin))
+	builder.WriteString(", ")
+	builder.WriteString("top_origin=")
+	builder.WriteString(_m.TopOrigin)
+	builder.WriteString(", ")
+	builder.WriteString("attestation_fmt=")
+	builder.WriteString(fmt.Sprintf("%v", _m.AttestationFmt))
+	builder.WriteString(", ")
+	builder.WriteString("backup_eligibility_bit=")
+	builder.WriteString(fmt.Sprintf("%v", _m.BackupEligibilityBit))
+	builder.WriteString(", ")
+	builder.WriteString("backup_state_bit=")
+	builder.WriteString(fmt.Sprintf("%v", _m.BackupStateBit))
+	builder.WriteString(", ")
+	builder.WriteString("sign_count=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SignCount))
+	builder.WriteString(", ")
+	builder.WriteString("aaguid=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Aaguid))
+	builder.WriteString(", ")
+	builder.WriteString("credential_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.CredentialID))
+	builder.WriteString(", ")
+	builder.WriteString("public_key=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PublicKey))
+	builder.WriteString(", ")
+	builder.WriteString("extension_bit=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ExtensionBit))
 	builder.WriteString(", ")
 	builder.WriteString("user_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.UserID))

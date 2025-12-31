@@ -192,8 +192,8 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	ctx.Logger().Info(r.ClientData)
-	ctx.Logger().Info(r.AttestationObject)
+	ctx.Logger().Infof("%#v\n", r.ClientData)
+	ctx.Logger().Infof("%#v\n", r.AttestationObject)
 
 	return ctx.NoContent(http.StatusOK)
 }

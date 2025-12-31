@@ -33,18 +33,30 @@ const (
 // PasskeyMutation represents an operation that mutates the Passkey nodes in the graph.
 type PasskeyMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *binid.BinId
-	created_at    *time.Time
-	updated_at    *time.Time
-	deleted_at    *time.Time
-	clearedFields map[string]struct{}
-	user          *binid.BinId
-	cleareduser   bool
-	done          bool
-	oldValue      func(context.Context) (*Passkey, error)
-	predicates    []predicate.Passkey
+	op                     Op
+	typ                    string
+	id                     *binid.BinId
+	created_at             *time.Time
+	updated_at             *time.Time
+	deleted_at             *time.Time
+	origin                 *string
+	cross_origin           *bool
+	top_origin             *string
+	attestation_fmt        *passkey.AttestationFmt
+	backup_eligibility_bit *bool
+	backup_state_bit       *bool
+	sign_count             *uint32
+	addsign_count          *int32
+	aaguid                 *[]byte
+	credential_id          *[]byte
+	public_key             *[]byte
+	extension_bit          *bool
+	clearedFields          map[string]struct{}
+	user                   *binid.BinId
+	cleareduser            bool
+	done                   bool
+	oldValue               func(context.Context) (*Passkey, error)
+	predicates             []predicate.Passkey
 }
 
 var _ ent.Mutation = (*PasskeyMutation)(nil)
@@ -272,6 +284,422 @@ func (m *PasskeyMutation) ResetDeletedAt() {
 	delete(m.clearedFields, passkey.FieldDeletedAt)
 }
 
+// SetOrigin sets the "origin" field.
+func (m *PasskeyMutation) SetOrigin(s string) {
+	m.origin = &s
+}
+
+// Origin returns the value of the "origin" field in the mutation.
+func (m *PasskeyMutation) Origin() (r string, exists bool) {
+	v := m.origin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrigin returns the old "origin" field's value of the Passkey entity.
+// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PasskeyMutation) OldOrigin(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrigin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrigin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrigin: %w", err)
+	}
+	return oldValue.Origin, nil
+}
+
+// ResetOrigin resets all changes to the "origin" field.
+func (m *PasskeyMutation) ResetOrigin() {
+	m.origin = nil
+}
+
+// SetCrossOrigin sets the "cross_origin" field.
+func (m *PasskeyMutation) SetCrossOrigin(b bool) {
+	m.cross_origin = &b
+}
+
+// CrossOrigin returns the value of the "cross_origin" field in the mutation.
+func (m *PasskeyMutation) CrossOrigin() (r bool, exists bool) {
+	v := m.cross_origin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCrossOrigin returns the old "cross_origin" field's value of the Passkey entity.
+// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PasskeyMutation) OldCrossOrigin(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCrossOrigin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCrossOrigin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCrossOrigin: %w", err)
+	}
+	return oldValue.CrossOrigin, nil
+}
+
+// ResetCrossOrigin resets all changes to the "cross_origin" field.
+func (m *PasskeyMutation) ResetCrossOrigin() {
+	m.cross_origin = nil
+}
+
+// SetTopOrigin sets the "top_origin" field.
+func (m *PasskeyMutation) SetTopOrigin(s string) {
+	m.top_origin = &s
+}
+
+// TopOrigin returns the value of the "top_origin" field in the mutation.
+func (m *PasskeyMutation) TopOrigin() (r string, exists bool) {
+	v := m.top_origin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTopOrigin returns the old "top_origin" field's value of the Passkey entity.
+// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PasskeyMutation) OldTopOrigin(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTopOrigin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTopOrigin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTopOrigin: %w", err)
+	}
+	return oldValue.TopOrigin, nil
+}
+
+// ResetTopOrigin resets all changes to the "top_origin" field.
+func (m *PasskeyMutation) ResetTopOrigin() {
+	m.top_origin = nil
+}
+
+// SetAttestationFmt sets the "attestation_fmt" field.
+func (m *PasskeyMutation) SetAttestationFmt(pf passkey.AttestationFmt) {
+	m.attestation_fmt = &pf
+}
+
+// AttestationFmt returns the value of the "attestation_fmt" field in the mutation.
+func (m *PasskeyMutation) AttestationFmt() (r passkey.AttestationFmt, exists bool) {
+	v := m.attestation_fmt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAttestationFmt returns the old "attestation_fmt" field's value of the Passkey entity.
+// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PasskeyMutation) OldAttestationFmt(ctx context.Context) (v passkey.AttestationFmt, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAttestationFmt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAttestationFmt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAttestationFmt: %w", err)
+	}
+	return oldValue.AttestationFmt, nil
+}
+
+// ResetAttestationFmt resets all changes to the "attestation_fmt" field.
+func (m *PasskeyMutation) ResetAttestationFmt() {
+	m.attestation_fmt = nil
+}
+
+// SetBackupEligibilityBit sets the "backup_eligibility_bit" field.
+func (m *PasskeyMutation) SetBackupEligibilityBit(b bool) {
+	m.backup_eligibility_bit = &b
+}
+
+// BackupEligibilityBit returns the value of the "backup_eligibility_bit" field in the mutation.
+func (m *PasskeyMutation) BackupEligibilityBit() (r bool, exists bool) {
+	v := m.backup_eligibility_bit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBackupEligibilityBit returns the old "backup_eligibility_bit" field's value of the Passkey entity.
+// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PasskeyMutation) OldBackupEligibilityBit(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBackupEligibilityBit is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBackupEligibilityBit requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBackupEligibilityBit: %w", err)
+	}
+	return oldValue.BackupEligibilityBit, nil
+}
+
+// ResetBackupEligibilityBit resets all changes to the "backup_eligibility_bit" field.
+func (m *PasskeyMutation) ResetBackupEligibilityBit() {
+	m.backup_eligibility_bit = nil
+}
+
+// SetBackupStateBit sets the "backup_state_bit" field.
+func (m *PasskeyMutation) SetBackupStateBit(b bool) {
+	m.backup_state_bit = &b
+}
+
+// BackupStateBit returns the value of the "backup_state_bit" field in the mutation.
+func (m *PasskeyMutation) BackupStateBit() (r bool, exists bool) {
+	v := m.backup_state_bit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBackupStateBit returns the old "backup_state_bit" field's value of the Passkey entity.
+// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PasskeyMutation) OldBackupStateBit(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBackupStateBit is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBackupStateBit requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBackupStateBit: %w", err)
+	}
+	return oldValue.BackupStateBit, nil
+}
+
+// ResetBackupStateBit resets all changes to the "backup_state_bit" field.
+func (m *PasskeyMutation) ResetBackupStateBit() {
+	m.backup_state_bit = nil
+}
+
+// SetSignCount sets the "sign_count" field.
+func (m *PasskeyMutation) SetSignCount(u uint32) {
+	m.sign_count = &u
+	m.addsign_count = nil
+}
+
+// SignCount returns the value of the "sign_count" field in the mutation.
+func (m *PasskeyMutation) SignCount() (r uint32, exists bool) {
+	v := m.sign_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSignCount returns the old "sign_count" field's value of the Passkey entity.
+// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PasskeyMutation) OldSignCount(ctx context.Context) (v uint32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSignCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSignCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSignCount: %w", err)
+	}
+	return oldValue.SignCount, nil
+}
+
+// AddSignCount adds u to the "sign_count" field.
+func (m *PasskeyMutation) AddSignCount(u int32) {
+	if m.addsign_count != nil {
+		*m.addsign_count += u
+	} else {
+		m.addsign_count = &u
+	}
+}
+
+// AddedSignCount returns the value that was added to the "sign_count" field in this mutation.
+func (m *PasskeyMutation) AddedSignCount() (r int32, exists bool) {
+	v := m.addsign_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSignCount resets all changes to the "sign_count" field.
+func (m *PasskeyMutation) ResetSignCount() {
+	m.sign_count = nil
+	m.addsign_count = nil
+}
+
+// SetAaguid sets the "aaguid" field.
+func (m *PasskeyMutation) SetAaguid(b []byte) {
+	m.aaguid = &b
+}
+
+// Aaguid returns the value of the "aaguid" field in the mutation.
+func (m *PasskeyMutation) Aaguid() (r []byte, exists bool) {
+	v := m.aaguid
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAaguid returns the old "aaguid" field's value of the Passkey entity.
+// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PasskeyMutation) OldAaguid(ctx context.Context) (v []byte, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAaguid is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAaguid requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAaguid: %w", err)
+	}
+	return oldValue.Aaguid, nil
+}
+
+// ResetAaguid resets all changes to the "aaguid" field.
+func (m *PasskeyMutation) ResetAaguid() {
+	m.aaguid = nil
+}
+
+// SetCredentialID sets the "credential_id" field.
+func (m *PasskeyMutation) SetCredentialID(b []byte) {
+	m.credential_id = &b
+}
+
+// CredentialID returns the value of the "credential_id" field in the mutation.
+func (m *PasskeyMutation) CredentialID() (r []byte, exists bool) {
+	v := m.credential_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCredentialID returns the old "credential_id" field's value of the Passkey entity.
+// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PasskeyMutation) OldCredentialID(ctx context.Context) (v []byte, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCredentialID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCredentialID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCredentialID: %w", err)
+	}
+	return oldValue.CredentialID, nil
+}
+
+// ResetCredentialID resets all changes to the "credential_id" field.
+func (m *PasskeyMutation) ResetCredentialID() {
+	m.credential_id = nil
+}
+
+// SetPublicKey sets the "public_key" field.
+func (m *PasskeyMutation) SetPublicKey(b []byte) {
+	m.public_key = &b
+}
+
+// PublicKey returns the value of the "public_key" field in the mutation.
+func (m *PasskeyMutation) PublicKey() (r []byte, exists bool) {
+	v := m.public_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPublicKey returns the old "public_key" field's value of the Passkey entity.
+// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PasskeyMutation) OldPublicKey(ctx context.Context) (v []byte, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPublicKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPublicKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPublicKey: %w", err)
+	}
+	return oldValue.PublicKey, nil
+}
+
+// ResetPublicKey resets all changes to the "public_key" field.
+func (m *PasskeyMutation) ResetPublicKey() {
+	m.public_key = nil
+}
+
+// SetExtensionBit sets the "extension_bit" field.
+func (m *PasskeyMutation) SetExtensionBit(b bool) {
+	m.extension_bit = &b
+}
+
+// ExtensionBit returns the value of the "extension_bit" field in the mutation.
+func (m *PasskeyMutation) ExtensionBit() (r bool, exists bool) {
+	v := m.extension_bit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExtensionBit returns the old "extension_bit" field's value of the Passkey entity.
+// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PasskeyMutation) OldExtensionBit(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExtensionBit is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExtensionBit requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExtensionBit: %w", err)
+	}
+	return oldValue.ExtensionBit, nil
+}
+
+// ResetExtensionBit resets all changes to the "extension_bit" field.
+func (m *PasskeyMutation) ResetExtensionBit() {
+	m.extension_bit = nil
+}
+
 // SetUserID sets the "user_id" field.
 func (m *PasskeyMutation) SetUserID(bi binid.BinId) {
 	m.user = &bi
@@ -369,7 +797,7 @@ func (m *PasskeyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PasskeyMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 15)
 	if m.created_at != nil {
 		fields = append(fields, passkey.FieldCreatedAt)
 	}
@@ -378,6 +806,39 @@ func (m *PasskeyMutation) Fields() []string {
 	}
 	if m.deleted_at != nil {
 		fields = append(fields, passkey.FieldDeletedAt)
+	}
+	if m.origin != nil {
+		fields = append(fields, passkey.FieldOrigin)
+	}
+	if m.cross_origin != nil {
+		fields = append(fields, passkey.FieldCrossOrigin)
+	}
+	if m.top_origin != nil {
+		fields = append(fields, passkey.FieldTopOrigin)
+	}
+	if m.attestation_fmt != nil {
+		fields = append(fields, passkey.FieldAttestationFmt)
+	}
+	if m.backup_eligibility_bit != nil {
+		fields = append(fields, passkey.FieldBackupEligibilityBit)
+	}
+	if m.backup_state_bit != nil {
+		fields = append(fields, passkey.FieldBackupStateBit)
+	}
+	if m.sign_count != nil {
+		fields = append(fields, passkey.FieldSignCount)
+	}
+	if m.aaguid != nil {
+		fields = append(fields, passkey.FieldAaguid)
+	}
+	if m.credential_id != nil {
+		fields = append(fields, passkey.FieldCredentialID)
+	}
+	if m.public_key != nil {
+		fields = append(fields, passkey.FieldPublicKey)
+	}
+	if m.extension_bit != nil {
+		fields = append(fields, passkey.FieldExtensionBit)
 	}
 	if m.user != nil {
 		fields = append(fields, passkey.FieldUserID)
@@ -396,6 +857,28 @@ func (m *PasskeyMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case passkey.FieldDeletedAt:
 		return m.DeletedAt()
+	case passkey.FieldOrigin:
+		return m.Origin()
+	case passkey.FieldCrossOrigin:
+		return m.CrossOrigin()
+	case passkey.FieldTopOrigin:
+		return m.TopOrigin()
+	case passkey.FieldAttestationFmt:
+		return m.AttestationFmt()
+	case passkey.FieldBackupEligibilityBit:
+		return m.BackupEligibilityBit()
+	case passkey.FieldBackupStateBit:
+		return m.BackupStateBit()
+	case passkey.FieldSignCount:
+		return m.SignCount()
+	case passkey.FieldAaguid:
+		return m.Aaguid()
+	case passkey.FieldCredentialID:
+		return m.CredentialID()
+	case passkey.FieldPublicKey:
+		return m.PublicKey()
+	case passkey.FieldExtensionBit:
+		return m.ExtensionBit()
 	case passkey.FieldUserID:
 		return m.UserID()
 	}
@@ -413,6 +896,28 @@ func (m *PasskeyMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldUpdatedAt(ctx)
 	case passkey.FieldDeletedAt:
 		return m.OldDeletedAt(ctx)
+	case passkey.FieldOrigin:
+		return m.OldOrigin(ctx)
+	case passkey.FieldCrossOrigin:
+		return m.OldCrossOrigin(ctx)
+	case passkey.FieldTopOrigin:
+		return m.OldTopOrigin(ctx)
+	case passkey.FieldAttestationFmt:
+		return m.OldAttestationFmt(ctx)
+	case passkey.FieldBackupEligibilityBit:
+		return m.OldBackupEligibilityBit(ctx)
+	case passkey.FieldBackupStateBit:
+		return m.OldBackupStateBit(ctx)
+	case passkey.FieldSignCount:
+		return m.OldSignCount(ctx)
+	case passkey.FieldAaguid:
+		return m.OldAaguid(ctx)
+	case passkey.FieldCredentialID:
+		return m.OldCredentialID(ctx)
+	case passkey.FieldPublicKey:
+		return m.OldPublicKey(ctx)
+	case passkey.FieldExtensionBit:
+		return m.OldExtensionBit(ctx)
 	case passkey.FieldUserID:
 		return m.OldUserID(ctx)
 	}
@@ -445,6 +950,83 @@ func (m *PasskeyMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetDeletedAt(v)
 		return nil
+	case passkey.FieldOrigin:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrigin(v)
+		return nil
+	case passkey.FieldCrossOrigin:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCrossOrigin(v)
+		return nil
+	case passkey.FieldTopOrigin:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTopOrigin(v)
+		return nil
+	case passkey.FieldAttestationFmt:
+		v, ok := value.(passkey.AttestationFmt)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAttestationFmt(v)
+		return nil
+	case passkey.FieldBackupEligibilityBit:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBackupEligibilityBit(v)
+		return nil
+	case passkey.FieldBackupStateBit:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBackupStateBit(v)
+		return nil
+	case passkey.FieldSignCount:
+		v, ok := value.(uint32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSignCount(v)
+		return nil
+	case passkey.FieldAaguid:
+		v, ok := value.([]byte)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAaguid(v)
+		return nil
+	case passkey.FieldCredentialID:
+		v, ok := value.([]byte)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCredentialID(v)
+		return nil
+	case passkey.FieldPublicKey:
+		v, ok := value.([]byte)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPublicKey(v)
+		return nil
+	case passkey.FieldExtensionBit:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExtensionBit(v)
+		return nil
 	case passkey.FieldUserID:
 		v, ok := value.(binid.BinId)
 		if !ok {
@@ -459,13 +1041,21 @@ func (m *PasskeyMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *PasskeyMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addsign_count != nil {
+		fields = append(fields, passkey.FieldSignCount)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *PasskeyMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case passkey.FieldSignCount:
+		return m.AddedSignCount()
+	}
 	return nil, false
 }
 
@@ -474,6 +1064,13 @@ func (m *PasskeyMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *PasskeyMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case passkey.FieldSignCount:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSignCount(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Passkey numeric field %s", name)
 }
@@ -518,6 +1115,39 @@ func (m *PasskeyMutation) ResetField(name string) error {
 		return nil
 	case passkey.FieldDeletedAt:
 		m.ResetDeletedAt()
+		return nil
+	case passkey.FieldOrigin:
+		m.ResetOrigin()
+		return nil
+	case passkey.FieldCrossOrigin:
+		m.ResetCrossOrigin()
+		return nil
+	case passkey.FieldTopOrigin:
+		m.ResetTopOrigin()
+		return nil
+	case passkey.FieldAttestationFmt:
+		m.ResetAttestationFmt()
+		return nil
+	case passkey.FieldBackupEligibilityBit:
+		m.ResetBackupEligibilityBit()
+		return nil
+	case passkey.FieldBackupStateBit:
+		m.ResetBackupStateBit()
+		return nil
+	case passkey.FieldSignCount:
+		m.ResetSignCount()
+		return nil
+	case passkey.FieldAaguid:
+		m.ResetAaguid()
+		return nil
+	case passkey.FieldCredentialID:
+		m.ResetCredentialID()
+		return nil
+	case passkey.FieldPublicKey:
+		m.ResetPublicKey()
+		return nil
+	case passkey.FieldExtensionBit:
+		m.ResetExtensionBit()
 		return nil
 	case passkey.FieldUserID:
 		m.ResetUserID()

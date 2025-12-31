@@ -21,11 +21,42 @@ func (Passkey) Fields() []ent.Field {
 			Immutable().
 			Unique().
 			SchemaType(map[string]string{dialect.MySQL: "binary(16)"}),
+		field.String("origin").
+			NotEmpty().
+			MaxLen(256).
+			Immutable(),
+		field.Bool("cross_origin").
+			Immutable(),
+		field.String("top_origin").
+			NotEmpty().
+			MaxLen(256).
+			Immutable(),
+		field.Enum("attestation_fmt").
+			Values("none", "packed", "tpm" /* etc */).
+			Immutable(),
+		field.Bool("backup_eligibility_bit"),
+		field.Bool("backup_state_bit"),
+		field.Uint32("sign_count"),
+		field.Bytes("aaguid").
+			MinLen(16).
+			MaxLen(16).
+			Immutable().
+			SchemaType(map[string]string{dialect.MySQL: "binary(16)"}),
+		field.Bytes("credential_id").
+			NotEmpty().
+			Immutable().
+			MaxLen(32).
+			Unique(),
+		field.Bytes("public_key").
+			NotEmpty().
+			MaxLen(2024).
+			Immutable().
+			Unique(),
+		field.Bool("extension_bit"),
 		field.UUID("user_id", binid.BinId{}).
 			Immutable().
 			SchemaType(map[string]string{dialect.MySQL: "binary(16)"}),
 	}
-
 }
 
 // Edges of the Passkey.

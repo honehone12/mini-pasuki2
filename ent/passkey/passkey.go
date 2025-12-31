@@ -3,6 +3,7 @@
 package passkey
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -20,6 +21,28 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
 	FieldDeletedAt = "deleted_at"
+	// FieldOrigin holds the string denoting the origin field in the database.
+	FieldOrigin = "origin"
+	// FieldCrossOrigin holds the string denoting the cross_origin field in the database.
+	FieldCrossOrigin = "cross_origin"
+	// FieldTopOrigin holds the string denoting the top_origin field in the database.
+	FieldTopOrigin = "top_origin"
+	// FieldAttestationFmt holds the string denoting the attestation_fmt field in the database.
+	FieldAttestationFmt = "attestation_fmt"
+	// FieldBackupEligibilityBit holds the string denoting the backup_eligibility_bit field in the database.
+	FieldBackupEligibilityBit = "backup_eligibility_bit"
+	// FieldBackupStateBit holds the string denoting the backup_state_bit field in the database.
+	FieldBackupStateBit = "backup_state_bit"
+	// FieldSignCount holds the string denoting the sign_count field in the database.
+	FieldSignCount = "sign_count"
+	// FieldAaguid holds the string denoting the aaguid field in the database.
+	FieldAaguid = "aaguid"
+	// FieldCredentialID holds the string denoting the credential_id field in the database.
+	FieldCredentialID = "credential_id"
+	// FieldPublicKey holds the string denoting the public_key field in the database.
+	FieldPublicKey = "public_key"
+	// FieldExtensionBit holds the string denoting the extension_bit field in the database.
+	FieldExtensionBit = "extension_bit"
 	// FieldUserID holds the string denoting the user_id field in the database.
 	FieldUserID = "user_id"
 	// EdgeUser holds the string denoting the user edge name in mutations.
@@ -41,6 +64,17 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldDeletedAt,
+	FieldOrigin,
+	FieldCrossOrigin,
+	FieldTopOrigin,
+	FieldAttestationFmt,
+	FieldBackupEligibilityBit,
+	FieldBackupStateBit,
+	FieldSignCount,
+	FieldAaguid,
+	FieldCredentialID,
+	FieldPublicKey,
+	FieldExtensionBit,
 	FieldUserID,
 }
 
@@ -61,7 +95,41 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// OriginValidator is a validator for the "origin" field. It is called by the builders before save.
+	OriginValidator func(string) error
+	// TopOriginValidator is a validator for the "top_origin" field. It is called by the builders before save.
+	TopOriginValidator func(string) error
+	// AaguidValidator is a validator for the "aaguid" field. It is called by the builders before save.
+	AaguidValidator func([]byte) error
+	// CredentialIDValidator is a validator for the "credential_id" field. It is called by the builders before save.
+	CredentialIDValidator func([]byte) error
+	// PublicKeyValidator is a validator for the "public_key" field. It is called by the builders before save.
+	PublicKeyValidator func([]byte) error
 )
+
+// AttestationFmt defines the type for the "attestation_fmt" enum field.
+type AttestationFmt string
+
+// AttestationFmt values.
+const (
+	AttestationFmtNone   AttestationFmt = "none"
+	AttestationFmtPacked AttestationFmt = "packed"
+	AttestationFmtTpm    AttestationFmt = "tpm"
+)
+
+func (af AttestationFmt) String() string {
+	return string(af)
+}
+
+// AttestationFmtValidator is a validator for the "attestation_fmt" field enum values. It is called by the builders before save.
+func AttestationFmtValidator(af AttestationFmt) error {
+	switch af {
+	case AttestationFmtNone, AttestationFmtPacked, AttestationFmtTpm:
+		return nil
+	default:
+		return fmt.Errorf("passkey: invalid enum value for attestation_fmt field: %q", af)
+	}
+}
 
 // OrderOption defines the ordering options for the Passkey queries.
 type OrderOption func(*sql.Selector)
@@ -84,6 +152,46 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByDeletedAt orders the results by the deleted_at field.
 func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
+}
+
+// ByOrigin orders the results by the origin field.
+func ByOrigin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOrigin, opts...).ToFunc()
+}
+
+// ByCrossOrigin orders the results by the cross_origin field.
+func ByCrossOrigin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCrossOrigin, opts...).ToFunc()
+}
+
+// ByTopOrigin orders the results by the top_origin field.
+func ByTopOrigin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTopOrigin, opts...).ToFunc()
+}
+
+// ByAttestationFmt orders the results by the attestation_fmt field.
+func ByAttestationFmt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAttestationFmt, opts...).ToFunc()
+}
+
+// ByBackupEligibilityBit orders the results by the backup_eligibility_bit field.
+func ByBackupEligibilityBit(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBackupEligibilityBit, opts...).ToFunc()
+}
+
+// ByBackupStateBit orders the results by the backup_state_bit field.
+func ByBackupStateBit(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBackupStateBit, opts...).ToFunc()
+}
+
+// BySignCount orders the results by the sign_count field.
+func BySignCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSignCount, opts...).ToFunc()
+}
+
+// ByExtensionBit orders the results by the extension_bit field.
+func ByExtensionBit(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldExtensionBit, opts...).ToFunc()
 }
 
 // ByUserID orders the results by the user_id field.

@@ -54,6 +54,69 @@ func (_u *PasskeyUpdate) ClearDeletedAt() *PasskeyUpdate {
 	return _u
 }
 
+// SetBackupEligibilityBit sets the "backup_eligibility_bit" field.
+func (_u *PasskeyUpdate) SetBackupEligibilityBit(v bool) *PasskeyUpdate {
+	_u.mutation.SetBackupEligibilityBit(v)
+	return _u
+}
+
+// SetNillableBackupEligibilityBit sets the "backup_eligibility_bit" field if the given value is not nil.
+func (_u *PasskeyUpdate) SetNillableBackupEligibilityBit(v *bool) *PasskeyUpdate {
+	if v != nil {
+		_u.SetBackupEligibilityBit(*v)
+	}
+	return _u
+}
+
+// SetBackupStateBit sets the "backup_state_bit" field.
+func (_u *PasskeyUpdate) SetBackupStateBit(v bool) *PasskeyUpdate {
+	_u.mutation.SetBackupStateBit(v)
+	return _u
+}
+
+// SetNillableBackupStateBit sets the "backup_state_bit" field if the given value is not nil.
+func (_u *PasskeyUpdate) SetNillableBackupStateBit(v *bool) *PasskeyUpdate {
+	if v != nil {
+		_u.SetBackupStateBit(*v)
+	}
+	return _u
+}
+
+// SetSignCount sets the "sign_count" field.
+func (_u *PasskeyUpdate) SetSignCount(v uint32) *PasskeyUpdate {
+	_u.mutation.ResetSignCount()
+	_u.mutation.SetSignCount(v)
+	return _u
+}
+
+// SetNillableSignCount sets the "sign_count" field if the given value is not nil.
+func (_u *PasskeyUpdate) SetNillableSignCount(v *uint32) *PasskeyUpdate {
+	if v != nil {
+		_u.SetSignCount(*v)
+	}
+	return _u
+}
+
+// AddSignCount adds value to the "sign_count" field.
+func (_u *PasskeyUpdate) AddSignCount(v int32) *PasskeyUpdate {
+	_u.mutation.AddSignCount(v)
+	return _u
+}
+
+// SetExtensionBit sets the "extension_bit" field.
+func (_u *PasskeyUpdate) SetExtensionBit(v bool) *PasskeyUpdate {
+	_u.mutation.SetExtensionBit(v)
+	return _u
+}
+
+// SetNillableExtensionBit sets the "extension_bit" field if the given value is not nil.
+func (_u *PasskeyUpdate) SetNillableExtensionBit(v *bool) *PasskeyUpdate {
+	if v != nil {
+		_u.SetExtensionBit(*v)
+	}
+	return _u
+}
+
 // Mutation returns the PasskeyMutation object of the builder.
 func (_u *PasskeyUpdate) Mutation() *PasskeyMutation {
 	return _u.mutation
@@ -124,6 +187,21 @@ func (_u *PasskeyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.DeletedAtCleared() {
 		_spec.ClearField(passkey.FieldDeletedAt, field.TypeTime)
 	}
+	if value, ok := _u.mutation.BackupEligibilityBit(); ok {
+		_spec.SetField(passkey.FieldBackupEligibilityBit, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.BackupStateBit(); ok {
+		_spec.SetField(passkey.FieldBackupStateBit, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SignCount(); ok {
+		_spec.SetField(passkey.FieldSignCount, field.TypeUint32, value)
+	}
+	if value, ok := _u.mutation.AddedSignCount(); ok {
+		_spec.AddField(passkey.FieldSignCount, field.TypeUint32, value)
+	}
+	if value, ok := _u.mutation.ExtensionBit(); ok {
+		_spec.SetField(passkey.FieldExtensionBit, field.TypeBool, value)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{passkey.Label}
@@ -167,6 +245,69 @@ func (_u *PasskeyUpdateOne) SetNillableDeletedAt(v *time.Time) *PasskeyUpdateOne
 // ClearDeletedAt clears the value of the "deleted_at" field.
 func (_u *PasskeyUpdateOne) ClearDeletedAt() *PasskeyUpdateOne {
 	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
+// SetBackupEligibilityBit sets the "backup_eligibility_bit" field.
+func (_u *PasskeyUpdateOne) SetBackupEligibilityBit(v bool) *PasskeyUpdateOne {
+	_u.mutation.SetBackupEligibilityBit(v)
+	return _u
+}
+
+// SetNillableBackupEligibilityBit sets the "backup_eligibility_bit" field if the given value is not nil.
+func (_u *PasskeyUpdateOne) SetNillableBackupEligibilityBit(v *bool) *PasskeyUpdateOne {
+	if v != nil {
+		_u.SetBackupEligibilityBit(*v)
+	}
+	return _u
+}
+
+// SetBackupStateBit sets the "backup_state_bit" field.
+func (_u *PasskeyUpdateOne) SetBackupStateBit(v bool) *PasskeyUpdateOne {
+	_u.mutation.SetBackupStateBit(v)
+	return _u
+}
+
+// SetNillableBackupStateBit sets the "backup_state_bit" field if the given value is not nil.
+func (_u *PasskeyUpdateOne) SetNillableBackupStateBit(v *bool) *PasskeyUpdateOne {
+	if v != nil {
+		_u.SetBackupStateBit(*v)
+	}
+	return _u
+}
+
+// SetSignCount sets the "sign_count" field.
+func (_u *PasskeyUpdateOne) SetSignCount(v uint32) *PasskeyUpdateOne {
+	_u.mutation.ResetSignCount()
+	_u.mutation.SetSignCount(v)
+	return _u
+}
+
+// SetNillableSignCount sets the "sign_count" field if the given value is not nil.
+func (_u *PasskeyUpdateOne) SetNillableSignCount(v *uint32) *PasskeyUpdateOne {
+	if v != nil {
+		_u.SetSignCount(*v)
+	}
+	return _u
+}
+
+// AddSignCount adds value to the "sign_count" field.
+func (_u *PasskeyUpdateOne) AddSignCount(v int32) *PasskeyUpdateOne {
+	_u.mutation.AddSignCount(v)
+	return _u
+}
+
+// SetExtensionBit sets the "extension_bit" field.
+func (_u *PasskeyUpdateOne) SetExtensionBit(v bool) *PasskeyUpdateOne {
+	_u.mutation.SetExtensionBit(v)
+	return _u
+}
+
+// SetNillableExtensionBit sets the "extension_bit" field if the given value is not nil.
+func (_u *PasskeyUpdateOne) SetNillableExtensionBit(v *bool) *PasskeyUpdateOne {
+	if v != nil {
+		_u.SetExtensionBit(*v)
+	}
 	return _u
 }
 
@@ -269,6 +410,21 @@ func (_u *PasskeyUpdateOne) sqlSave(ctx context.Context) (_node *Passkey, err er
 	}
 	if _u.mutation.DeletedAtCleared() {
 		_spec.ClearField(passkey.FieldDeletedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.BackupEligibilityBit(); ok {
+		_spec.SetField(passkey.FieldBackupEligibilityBit, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.BackupStateBit(); ok {
+		_spec.SetField(passkey.FieldBackupStateBit, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SignCount(); ok {
+		_spec.SetField(passkey.FieldSignCount, field.TypeUint32, value)
+	}
+	if value, ok := _u.mutation.AddedSignCount(); ok {
+		_spec.AddField(passkey.FieldSignCount, field.TypeUint32, value)
+	}
+	if value, ok := _u.mutation.ExtensionBit(); ok {
+		_spec.SetField(passkey.FieldExtensionBit, field.TypeBool, value)
 	}
 	_node = &Passkey{config: _u.config}
 	_spec.Assign = _node.assignValues

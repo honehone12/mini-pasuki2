@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"mini-pasuki2/binid"
 	"mini-pasuki2/ent"
+	"mini-pasuki2/ent/passkey"
 	"mini-pasuki2/gen"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 )
 
 const PUBLIC_KEY_TYPE = "public-key"
+
 const (
 	SIGNATURE_ALGORITHM_ES256 = -7
 	SIGNATURE_ALGORITHM_RS256 = -257
@@ -22,9 +24,9 @@ const (
 
 const DEFAULT_TIME_OUT_MIL = 180000
 
-const ATTESTATION_NONE = "none" // i will not implement hardawre attestation
+const ATTESTATION_NONE = "none"
 
-const AUTHENTICATOR_REQUIRED = "required" // leave to brower default
+const AUTHENTICATOR_REQUIRED = "required"
 
 const REDIS_REGISTRATION_CHALLENGE_KEY = "REGCHAL"
 
@@ -159,6 +161,32 @@ func (p2 *Pasuki2) RegisterFinish(
 
 	if p.Id != base64.RawURLEncoding.EncodeToString(attObj.CredentialId) {
 		r.ValidationErr = errors.New("credential id is not correct")
+		return r
+	}
+
+	id, err := binid.NewSequential()
+	if err != nil {
+		r.SystemErr = err
+		return r
+	}
+
+	err = p2.passKeyClient.Create().
+		SetID(id).
+		SetOrigin(clientData.Origin).
+		SetCrossOrigin(clientData.CrossOrigin).
+		SetTopOrigin(clientData.TopOrigin).
+		SetAttestationFmt(passkey.AttestationFmt(r.AttestationObject.Fmt)).
+		SetBackupEligibilityBit(r.AttestationObject.BeBit).
+		SetBackupStateBit(r.AttestationObject.BsBit).
+		SetSignCount(r.AttestationObject.SignCount).
+		SetAaguid(r.AttestationObject.Aaguid).
+		SetCredentialID(r.AttestationObject.CredentialId).
+		SetPublicKey(r.AttestationObject.CredentialPublicKey).
+		SetExtensionBit(r.AttestationObject.ExtBit).
+		SetUserID(p.UserId).
+		Exec(ctx)
+	if err != nil {
+		r.SystemErr = err
 		return r
 	}
 
