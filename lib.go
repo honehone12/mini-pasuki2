@@ -23,6 +23,7 @@ func run() {
 	if err != nil {
 		echo.Logger.Fatal(err)
 	}
+	defer app.Close()
 
 	uiUrl, err := url.Parse("http://localhost:3000")
 	if err != nil {

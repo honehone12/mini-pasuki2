@@ -1,11 +1,11 @@
-package challenge
+package gen
 
 import "crypto/rand"
 
 const CHALLENGE_LEN = 32
 
-func GenChallenge() ([]byte, error) {
-	b := make([]byte, CHALLENGE_LEN)
+func Gen(len int) ([]byte, error) {
+	b := make([]byte, len)
 	_, err := rand.Read(b)
 	if err != nil {
 		return nil, err

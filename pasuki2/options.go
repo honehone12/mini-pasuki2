@@ -18,8 +18,7 @@ type PublicKeyCredentialParams struct {
 
 type AuthenticatorSelection struct {
 	AuthenticatorAttachment string `json:"authenticatorAttachment,omitempty"`
-	ResidentKey             string `json:"residentKey"`
-	RequireResidentKey      bool   `json:"requireResidentKey,omitempty"`
+	ResidentKey             string `json:"residentKey,omitempty"`
 	UserVerification        string `json:"userVerification"`
 }
 
@@ -32,7 +31,8 @@ type RegistrationOptions struct {
 	Attestation               string                      `json:"attestation"`
 	AuthenticatorSelection    AuthenticatorSelection      `json:"authenticatorSelection"`
 
-	// AttestationFormats // not implemented
-	// ExcludeCredentials // not implemented
+	// AttestationFormats // for ca validation
+	// ExcludeCredentials // to exclude existing credentials
+
 	// Extensions // not implemented
 }
