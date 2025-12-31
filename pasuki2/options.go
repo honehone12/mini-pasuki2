@@ -16,6 +16,12 @@ type PublicKeyCredentialParams struct {
 	Alg  int    `json:"alg"`
 }
 
+type Credential struct {
+	Id         []byte   `json:"id"`
+	Transports []string `json:"transports,omitempty"`
+	Type       string   `json:"type"`
+}
+
 type AuthenticatorSelection struct {
 	AuthenticatorAttachment string `json:"authenticatorAttachment,omitempty"`
 	ResidentKey             string `json:"residentKey,omitempty"`
@@ -30,9 +36,7 @@ type RegistrationOptions struct {
 	Timeout                   uint                        `json:"timeout"`
 	Attestation               string                      `json:"attestation"`
 	AuthenticatorSelection    AuthenticatorSelection      `json:"authenticatorSelection"`
-
-	// AttestationFormats // for ca validation
-	// ExcludeCredentials // to exclude existing credentials
-
-	// Extensions // not implemented
+	AttestationFormats        []string                    `json:"attestationFormats,omitempty"`
+	ExcludeCredentials        []Credential                `json:"excludeCredentials,omitempty"`
+	Extensions                map[string]any              `json:"extensions,omitempty"`
 }

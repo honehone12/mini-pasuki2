@@ -114,6 +114,9 @@ func (p2 *Pasuki2) RegisterStart(
 		AuthenticatorSelection: AuthenticatorSelection{
 			UserVerification: AUTHENTICATOR_REQUIRED,
 		},
+		AttestationFormats: nil,
+		ExcludeCredentials: nil,
+		Extensions:         nil,
 	}
 
 	return op, nil

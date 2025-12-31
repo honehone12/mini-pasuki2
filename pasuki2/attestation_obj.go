@@ -43,6 +43,7 @@ type RegistrationAttestationObject struct {
 	CredentialId        []byte
 	CredentialPublicKey []byte
 	CoseKey             CoseKey
+	ExtBit              bool
 	Extensions          map[string]any
 }
 
@@ -114,8 +115,9 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 		return nil, err
 	}
 
+	extBit := flags&FLAG_EXTENSION_DATA == 1
 	var extensions map[string]any
-	if flags&FLAG_EXTENSION_DATA == 1 {
+	if extBit {
 		if l == p {
 			return nil, errors.New("auth data is not enough for extension data")
 		}
@@ -128,7 +130,7 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 		}
 		p += len(rawExt)
 
-		if err := cbor.Unmarshal(rawExt, extensions); err != nil {
+		if err := cbor.Unmarshal(rawExt, &extensions); err != nil {
 			return nil, err
 		}
 	}
@@ -147,6 +149,7 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 		CredentialId:        credentialId,
 		CredentialPublicKey: rawPk,
 		CoseKey:             cose,
+		ExtBit:              extBit,
 		Extensions:          extensions,
 	}
 
