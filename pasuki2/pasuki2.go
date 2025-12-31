@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"mini-pasuki2/binid"
+	"mini-pasuki2/challenge"
 	"mini-pasuki2/ent"
 	"mini-pasuki2/ent/passkey"
-	"mini-pasuki2/gen"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -77,7 +77,7 @@ func (p2 *Pasuki2) RegisterStart(
 	ctx context.Context,
 	p RegisterStartParams,
 ) (*RegistrationOptions, error) {
-	chal, err := gen.Gen(gen.CHALLENGE_LEN)
+	chal, err := challenge.Gen()
 	if err != nil {
 		return nil, err
 	}
