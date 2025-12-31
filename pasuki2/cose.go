@@ -56,7 +56,7 @@ func parseCoseKey(raw []byte) (CoseKey, error) {
 	}
 
 	switch kty {
-	case int64(COSE_KEYTYPE_EC2):
+	case uint64(COSE_KEYTYPE_EC2):
 		{
 			if alg != int64(SIGNATURE_ALGORITHM_ES256) {
 				return nil, errors.New("cose algorith not supported")
@@ -78,7 +78,7 @@ func parseCoseKey(raw []byte) (CoseKey, error) {
 				return nil, ErrInvalidCose
 			}
 		}
-	case int64(COSE_KEYTYPE_RSA):
+	case uint64(COSE_KEYTYPE_RSA):
 		{
 			if alg != int64(SIGNATURE_ALGORITHM_RS256) {
 				return nil, errors.New("cose algorith not supported")
