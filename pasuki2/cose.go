@@ -19,7 +19,7 @@ var ErrInvalidCose = errors.New("invalid cose")
 
 type Cose map[int]any
 
-func CoseFromBytes(raw []byte) (Cose, error) {
+func coseFromBytes(raw []byte) (Cose, error) {
 	var c Cose
 	if err := cbor.Unmarshal(raw, &c); err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func CoseFromBytes(raw []byte) (Cose, error) {
 	return c, nil
 }
 
-func ParseCose(raw []byte) (Cose, error) {
+func parseCose(raw []byte) (Cose, error) {
 	var c Cose
 	if err := cbor.Unmarshal(raw, &c); err != nil {
 		return nil, err
@@ -69,6 +69,6 @@ func ParseCose(raw []byte) (Cose, error) {
 	return c, nil
 }
 
-func (c Cose) IsEs256() bool {
+func (c Cose) isEs256() bool {
 	return c[COSE_KEY_ALG] == int64(SIGNATURE_ALGORITHM_ES256)
 }

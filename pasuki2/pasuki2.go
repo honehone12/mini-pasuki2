@@ -127,6 +127,7 @@ func (p2 *Pasuki2) RegisterFinish(
 
 	if p.Type != PUBLIC_KEY_TYPE {
 		r.ValidationErr = errors.New("invalid credential type")
+		return r
 	}
 
 	key := fmt.Sprintf("%s:%s", REDIS_REGISTRATION_CHALLENGE_KEY, p.Email)
@@ -148,6 +149,11 @@ func (p2 *Pasuki2) RegisterFinish(
 	attObj, err := p2.verifyRegistrationAttestationObject(p.AttestationObject)
 	if err != nil {
 		r.ValidationErr = err
+		return r
+	}
+
+	if p.Id != base64.RawURLEncoding.EncodeToString(attObj.CredentialId) {
+		r.ValidationErr = errors.New("credential id is not correct")
 		return r
 	}
 

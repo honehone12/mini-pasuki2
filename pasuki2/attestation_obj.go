@@ -109,7 +109,7 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 	}
 	p += len(rawPk)
 
-	cose, err := ParseCose(rawPk)
+	cose, err := parseCose(rawPk)
 	if err != nil {
 		return nil, err
 	}
