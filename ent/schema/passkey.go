@@ -7,6 +7,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 // Passkey holds the schema definition for the Passkey entity.
@@ -70,6 +71,12 @@ func (Passkey) Edges() []ent.Edge {
 			Required().
 			Immutable().
 			Unique(),
+	}
+}
+
+func (Passkey) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("credential_id").Unique(),
 	}
 }
 

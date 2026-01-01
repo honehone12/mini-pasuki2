@@ -33,9 +33,13 @@ type AttestationObject struct {
 	AttStmt  map[string]any `cbor:"attStmt"`
 }
 
-type RegistrationAttestationObject struct {
-	Fmt                 string
-	AttStmt             map[string]any
+type ParsedAttestationObject struct {
+	Fmt     string
+	AttStmt map[string]any
+	*ParsedAuthenticatorData
+}
+
+type ParsedAuthenticatorData struct {
 	BeBit               bool
 	BsBit               bool
 	SignCount           uint32
@@ -47,31 +51,19 @@ type RegistrationAttestationObject struct {
 	Extensions          map[string]any
 }
 
-func (p2 *Pasuki2) verifyRegistrationAttestationObject(
-	encObj string,
-) (*RegistrationAttestationObject, error) {
-	raw, err := base64.RawURLEncoding.DecodeString(encObj)
-	if err != nil {
-		return nil, err
-	}
-
-	att := AttestationObject{}
-	if err := cbor.Unmarshal(raw, &att); err != nil {
-		return nil, err
-	}
-
-	l := len(att.AuthData)
+func (p2 *Pasuki2) verifyAuthenticatorData(data []byte) (*ParsedAuthenticatorData, error) {
+	l := len(data)
 	if l < __REGISTRATION_KNOWN_LEN {
 		return nil, errors.New("invalid auth data length")
 	}
 
 	p := RP_ID_HASH_LEN
-	rpIdHash := att.AuthData[:p]
+	rpIdHash := data[:p]
 	if subtle.ConstantTimeCompare(p2.rpIdHash, rpIdHash) == 0 {
 		return nil, errors.New("unexpected rp id hash")
 	}
 
-	flags := att.AuthData[p]
+	flags := data[p]
 	if flags&FLAG_USER_PRESENCE == 0 {
 		return nil, errors.New("unexpected up bit")
 	}
@@ -87,23 +79,23 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 		return nil, errors.New("unexpected attested credential data bit")
 	}
 
-	signCount := binary.BigEndian.Uint32(att.AuthData[p : p+SIGN_COUNT_LEN])
+	signCount := binary.BigEndian.Uint32(data[p : p+SIGN_COUNT_LEN])
 	p += SIGN_COUNT_LEN
 
-	aaguid := att.AuthData[p : p+AAGUID_LEN]
+	aaguid := data[p : p+AAGUID_LEN]
 	p += AAGUID_LEN
 
-	credIdLen := int(binary.BigEndian.Uint16(att.AuthData[p : p+CREDENTIAL_ID_LENGTH_LEN]))
+	credIdLen := int(binary.BigEndian.Uint16(data[p : p+CREDENTIAL_ID_LENGTH_LEN]))
 	p += CREDENTIAL_ID_LENGTH_LEN
 	if l <= p+credIdLen {
 		return nil, errors.New("auth data is not enough for credential")
 	}
 
-	credentialId := att.AuthData[p : p+credIdLen]
+	credentialId := data[p : p+credIdLen]
 	p += credIdLen
 
 	var rawPk cbor.RawMessage
-	err = cbor.NewDecoder(bytes.NewReader(att.AuthData[p:])).
+	err := cbor.NewDecoder(bytes.NewReader(data[p:])).
 		Decode(&rawPk)
 	if err != nil {
 		return nil, err
@@ -123,7 +115,7 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 		}
 
 		var rawExt cbor.RawMessage
-		err = cbor.NewDecoder(bytes.NewReader(att.AuthData[:p])).
+		err = cbor.NewDecoder(bytes.NewReader(data[:p])).
 			Decode(&rawExt)
 		if err != nil {
 			return nil, err
@@ -139,9 +131,7 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 		return nil, errors.New("l != p, unexpected data structure")
 	}
 
-	o := &RegistrationAttestationObject{
-		Fmt:                 att.Fmt,
-		AttStmt:             att.AttStmt,
+	authData := &ParsedAuthenticatorData{
 		BeBit:               beBit,
 		BsBit:               bsBit,
 		SignCount:           signCount,
@@ -151,6 +141,33 @@ func (p2 *Pasuki2) verifyRegistrationAttestationObject(
 		CoseKey:             coseKey,
 		ExtBit:              extBit,
 		Extensions:          extensions,
+	}
+
+	return authData, nil
+}
+
+func (p2 *Pasuki2) verifyAttestationObject(
+	encObj string,
+) (*ParsedAttestationObject, error) {
+	raw, err := base64.RawURLEncoding.DecodeString(encObj)
+	if err != nil {
+		return nil, err
+	}
+
+	att := AttestationObject{}
+	if err := cbor.Unmarshal(raw, &att); err != nil {
+		return nil, err
+	}
+
+	authData, err := p2.verifyAuthenticatorData(att.AuthData)
+	if err != nil {
+		return nil, err
+	}
+
+	o := &ParsedAttestationObject{
+		Fmt:                     att.Fmt,
+		AttStmt:                 att.AttStmt,
+		ParsedAuthenticatorData: authData,
 	}
 
 	return o, nil

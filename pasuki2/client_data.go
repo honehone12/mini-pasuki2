@@ -12,7 +12,7 @@ const (
 	CLIENT_DATA_TYPE_GET    = "webauthn.get"
 )
 
-type RegistrationClientData struct {
+type ParsedClientData struct {
 	Type        string `json:"type"`
 	Challenge   string `json:"challenge"`
 	Origin      string `json:"origin"`
@@ -20,16 +20,16 @@ type RegistrationClientData struct {
 	TopOrigin   string `json:"topOrigin"`
 }
 
-func (p2 *Pasuki2) verifyRegistrationClientData(
+func (p2 *Pasuki2) verifyClientData(
 	encData string,
 	cachedChal string,
-) (*RegistrationClientData, error) {
+) (*ParsedClientData, error) {
 	raw, err := base64.RawURLEncoding.DecodeString(encData)
 	if err != nil {
 		return nil, err
 	}
 
-	clientData := &RegistrationClientData{}
+	clientData := &ParsedClientData{}
 	if err := json.Unmarshal(raw, clientData); err != nil {
 		return nil, err
 	}

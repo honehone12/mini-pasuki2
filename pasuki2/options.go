@@ -42,7 +42,7 @@ type RegistrationOptions struct {
 }
 
 type VerifyOptions struct {
-	AllowCredentials []Credential `json:"allowCredentials"`
+	AllowCredentials []Credential `json:"allowCredentials,omitempty"`
 	Challenge        string       `json:"challenge"`
 	Timeout          uint         `json:"timeout"`
 	UserVerification string       `json:"userVerification"`
