@@ -82,6 +82,14 @@ func (_c *PasskeyCreate) SetTopOrigin(v string) *PasskeyCreate {
 	return _c
 }
 
+// SetNillableTopOrigin sets the "top_origin" field if the given value is not nil.
+func (_c *PasskeyCreate) SetNillableTopOrigin(v *string) *PasskeyCreate {
+	if v != nil {
+		_c.SetTopOrigin(*v)
+	}
+	return _c
+}
+
 // SetAttestationFmt sets the "attestation_fmt" field.
 func (_c *PasskeyCreate) SetAttestationFmt(v passkey.AttestationFmt) *PasskeyCreate {
 	_c.mutation.SetAttestationFmt(v)
@@ -210,9 +218,6 @@ func (_c *PasskeyCreate) check() error {
 	}
 	if _, ok := _c.mutation.CrossOrigin(); !ok {
 		return &ValidationError{Name: "cross_origin", err: errors.New(`ent: missing required field "Passkey.cross_origin"`)}
-	}
-	if _, ok := _c.mutation.TopOrigin(); !ok {
-		return &ValidationError{Name: "top_origin", err: errors.New(`ent: missing required field "Passkey.top_origin"`)}
 	}
 	if v, ok := _c.mutation.TopOrigin(); ok {
 		if err := passkey.TopOriginValidator(v); err != nil {

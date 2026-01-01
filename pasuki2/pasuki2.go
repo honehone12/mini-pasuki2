@@ -2,6 +2,7 @@ package pasuki2
 
 import (
 	"context"
+	"crypto/md5"
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
@@ -40,25 +41,21 @@ type Pasuki2 struct {
 	rpIdHash      []byte
 }
 
-type Passkey2Params struct {
-	UserId binid.BinId
-	Email  string
-}
-
-type RegisterStartParams struct {
-	Passkey2Params
-	Name string
-}
-
 type RegisterFinishParams struct {
-	Passkey2Params
+	Email             string
+	Name              string
 	Id                string
 	Type              string
 	AttestationObject string
 	ClientDataJson    string
 }
 
-type VerifyStartParams = Passkey2Params
+type VerifyParams struct {
+	UserId binid.BinId
+	Email  string
+}
+
+type VerifyStartParams = VerifyParams
 
 type E struct {
 	ValidationErr error
@@ -93,7 +90,8 @@ func NewPasuki2(
 
 func (p2 *Pasuki2) RegisterStart(
 	ctx context.Context,
-	p RegisterStartParams,
+	email string,
+	name string,
 ) *RegisterStartResult {
 	r := &RegisterStartResult{}
 
@@ -104,7 +102,7 @@ func (p2 *Pasuki2) RegisterStart(
 	}
 	encChal := base64.RawURLEncoding.EncodeToString(chal)
 
-	key := fmt.Sprintf("%s:%s", REDIS_REGISTRATION_CHALLENGE_KEY, p.Email)
+	key := fmt.Sprintf("%s:%s", REDIS_REGISTRATION_CHALLENGE_KEY, email)
 	err = p2.redis.SetArgs(
 		ctx,
 		key,
@@ -122,15 +120,17 @@ func (p2 *Pasuki2) RegisterStart(
 		return r
 	}
 
+	emailHash := md5.Sum([]byte(email))
+	encId := base64.RawURLEncoding.EncodeToString(emailHash[:])
 	op := &RegistrationOptions{
 		Challenge: encChal,
 		Rp: RelyingParty{
 			Name: "MiniPasuki2",
 		},
 		User: User{
-			Id:          p.UserId.String(),
-			Name:        p.Email,
-			DisplayName: p.Name,
+			Name:        email,
+			DisplayName: name,
+			Id:          encId,
 		},
 		PublicKeyCredentialParams: []PublicKeyCredentialParams{{
 			Type: PUBLIC_KEY_TYPE,
@@ -191,32 +191,6 @@ func (p2 *Pasuki2) RegisterFinish(
 		return r
 	}
 
-	id, err := binid.NewSequential()
-	if err != nil {
-		r.SystemErr = err
-		return r
-	}
-
-	err = p2.passKeyClient.Create().
-		SetID(id).
-		SetOrigin(clientData.Origin).
-		SetCrossOrigin(clientData.CrossOrigin).
-		SetTopOrigin(clientData.TopOrigin).
-		SetAttestationFmt(passkey.AttestationFmt(r.AttestationObject.Fmt)).
-		SetBackupEligibilityBit(r.AttestationObject.BeBit).
-		SetBackupStateBit(r.AttestationObject.BsBit).
-		SetSignCount(r.AttestationObject.SignCount).
-		SetAaguid(r.AttestationObject.Aaguid).
-		SetCredentialID(r.AttestationObject.CredentialId).
-		SetPublicKey(r.AttestationObject.CredentialPublicKey).
-		SetExtensionBit(r.AttestationObject.ExtBit).
-		SetUserID(p.UserId).
-		Exec(ctx)
-	if err != nil {
-		r.SystemErr = err
-		return r
-	}
-
 	r.ClientData = clientData
 	r.AttestationObject = attObj
 	return r
@@ -224,14 +198,15 @@ func (p2 *Pasuki2) RegisterFinish(
 
 func (p2 *Pasuki2) VerifyStart(
 	ctx context.Context,
-	p VerifyStartParams,
+	userId binid.BinId,
+	email string,
 ) *VerifyStartResult {
 	r := &VerifyStartResult{}
 
 	pk, err := p2.passKeyClient.Query().
 		Select(passkey.FieldCredentialID).
 		Where(
-			passkey.UserID(p.UserId),
+			passkey.UserID(userId),
 			passkey.DeletedAtIsNil(),
 		).
 		Order(sql.OrderByField(user.FieldCreatedAt, sql.OrderDesc()).ToFunc()).
@@ -252,7 +227,7 @@ func (p2 *Pasuki2) VerifyStart(
 	}
 	encChal := base64.RawURLEncoding.EncodeToString(chal)
 
-	key := fmt.Sprintf("%s:%x", REDIS_VERIFY_CHALLENGE_KEY, p.UserId)
+	key := fmt.Sprintf("%s:%x", REDIS_VERIFY_CHALLENGE_KEY, userId)
 	err = p2.redis.SetArgs(
 		ctx,
 		key,

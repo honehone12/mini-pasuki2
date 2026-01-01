@@ -49,21 +49,7 @@ func init() {
 	// passkeyDescTopOrigin is the schema descriptor for top_origin field.
 	passkeyDescTopOrigin := passkeyFields[3].Descriptor()
 	// passkey.TopOriginValidator is a validator for the "top_origin" field. It is called by the builders before save.
-	passkey.TopOriginValidator = func() func(string) error {
-		validators := passkeyDescTopOrigin.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(top_origin string) error {
-			for _, fn := range fns {
-				if err := fn(top_origin); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
+	passkey.TopOriginValidator = passkeyDescTopOrigin.Validators[0].(func(string) error)
 	// passkeyDescAaguid is the schema descriptor for aaguid field.
 	passkeyDescAaguid := passkeyFields[8].Descriptor()
 	// passkey.AaguidValidator is a validator for the "aaguid" field. It is called by the builders before save.

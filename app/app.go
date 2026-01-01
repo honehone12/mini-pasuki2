@@ -3,7 +3,9 @@ package app
 import (
 	"context"
 	"errors"
+	"mini-pasuki2/binid"
 	"mini-pasuki2/ent"
+	"mini-pasuki2/ent/passkey"
 	"mini-pasuki2/ent/user"
 	"mini-pasuki2/pasuki2"
 	"net/http"
@@ -31,10 +33,15 @@ type Request struct {
 	Email string `form:"email" validate:"required,email,max=256"`
 }
 
-type RegisterStartRequest = Request
+type RegisterRequest struct {
+	Request
+	Name string `form:"name" validate:"required,max=256"`
+}
+
+type RegisterStartRequest = RegisterRequest
 
 type RegisterFinishRequest struct {
-	Request
+	RegisterRequest
 	// (!) this is passkey credential id, not our database id
 	Id                      string `form:"id" validate:"required,base64rawurl,min=22"`
 	Type                    string `form:"type" validate:"required,eq=public-key"`
@@ -114,6 +121,14 @@ func (a *App) bind(ctx echo.Context, target any) error {
 	return nil
 }
 
+func (*App) rollback(tx *ent.Tx, original error) error {
+	if err := tx.Rollback(); err != nil {
+		return errors.Join(original, err)
+	}
+
+	return original
+}
+
 func (a *App) getUser(ctx context.Context, email string) (*ent.User, error) {
 	u, err := a.ent.User.Query().
 		Select(
@@ -144,43 +159,7 @@ func (a *App) RegisterStart(ctx echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	c := ctx.Request().Context()
-	u, err := a.ent.User.Query().
-		Select(
-			user.FieldID,
-			user.FieldName,
-			user.FieldLoginMethod,
-		).
-		Where(
-			user.Email(form.Email),
-			user.DeletedAtIsNil(),
-		).
-		Only(c)
-	if ent.IsNotFound(err) {
-		ctx.Logger().Warn("could not find user email")
-		return echo.ErrBadRequest
-	} else if err != nil {
-		ctx.Logger().Error(err)
-		return echo.ErrInternalServerError
-	}
-
-	if u.LoginMethod != user.LoginMethodPasskey {
-		err := a.ent.User.UpdateOneID(u.ID).
-			SetLoginMethod(user.LoginMethodPasskey).
-			Exec(c)
-		if err != nil {
-			ctx.Logger().Error(err)
-			return echo.ErrInternalServerError
-		}
-	}
-
-	r := a.pasuki.RegisterStart(c, pasuki2.RegisterStartParams{
-		Passkey2Params: pasuki2.Passkey2Params{
-			UserId: u.ID,
-			Email:  form.Email,
-		},
-		Name: u.Name,
-	})
+	r := a.pasuki.RegisterStart(ctx.Request().Context(), form.Email, form.Name)
 	if r.ValidationErr != nil {
 		ctx.Logger().Warn(r.ValidationErr)
 		return echo.ErrBadRequest
@@ -202,21 +181,9 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 	}
 
 	c := ctx.Request().Context()
-
-	u, err := a.getUser(c, form.Email)
-	if ent.IsNotFound(err) {
-		ctx.Logger().Warn("could not find user email")
-		return echo.ErrBadRequest
-	} else if err != nil {
-		ctx.Logger().Error(err)
-		return echo.ErrInternalServerError
-	}
-
 	p := pasuki2.RegisterFinishParams{
-		Passkey2Params: pasuki2.Passkey2Params{
-			UserId: u.ID,
-			Email:  form.Email,
-		},
+		Email:             form.Email,
+		Name:              form.Name,
 		Id:                form.Id,
 		Type:              form.Type,
 		AttestationObject: form.AttestationObject,
@@ -229,6 +196,60 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 	}
 	if r.SystemErr != nil {
 		ctx.Logger().Error(r.SystemErr)
+		return echo.ErrInternalServerError
+	}
+
+	passId, err := binid.NewSequential()
+	if err != nil {
+		ctx.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+
+	userId, err := binid.NewSequential()
+	if err != nil {
+		ctx.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+
+	tx, err := a.ent.Tx(c)
+	if err != nil {
+		ctx.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+
+	err = tx.User.Create().
+		SetID(userId).
+		SetName(form.Name).
+		SetEmail(form.Email).
+		Exec(c)
+	if err != nil {
+		err = a.rollback(tx, err)
+		ctx.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+	err = tx.Passkey.Create().
+		SetID(passId).
+		SetOrigin(r.ClientData.Origin).
+		SetCrossOrigin(r.ClientData.CrossOrigin).
+		SetTopOrigin(r.ClientData.TopOrigin).
+		SetAttestationFmt(passkey.AttestationFmt(r.AttestationObject.Fmt)).
+		SetBackupEligibilityBit(r.AttestationObject.BeBit).
+		SetBackupStateBit(r.AttestationObject.BsBit).
+		SetSignCount(r.AttestationObject.SignCount).
+		SetAaguid(r.AttestationObject.Aaguid).
+		SetCredentialID(r.AttestationObject.CredentialId).
+		SetPublicKey(r.AttestationObject.CredentialPublicKey).
+		SetExtensionBit(r.AttestationObject.ExtBit).
+		SetUserID(userId).
+		Exec(c)
+	if err != nil {
+		err = a.rollback(tx, err)
+		ctx.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+
+	if err := tx.Commit(); err != nil {
+		ctx.Logger().Error(err)
 		return echo.ErrInternalServerError
 	}
 
@@ -254,10 +275,7 @@ func (a *App) VerifyStart(ctx echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	r := a.pasuki.VerifyStart(c, pasuki2.VerifyStartParams{
-		UserId: u.ID,
-		Email:  form.Email,
-	})
+	r := a.pasuki.VerifyStart(c, u.ID, form.Email)
 	if r.ValidationErr != nil {
 		ctx.Logger().Warn(err)
 		return echo.ErrBadRequest

@@ -386,6 +386,16 @@ func TopOriginHasSuffix(v string) predicate.Passkey {
 	return predicate.Passkey(sql.FieldHasSuffix(FieldTopOrigin, v))
 }
 
+// TopOriginIsNil applies the IsNil predicate on the "top_origin" field.
+func TopOriginIsNil() predicate.Passkey {
+	return predicate.Passkey(sql.FieldIsNull(FieldTopOrigin))
+}
+
+// TopOriginNotNil applies the NotNil predicate on the "top_origin" field.
+func TopOriginNotNil() predicate.Passkey {
+	return predicate.Passkey(sql.FieldNotNull(FieldTopOrigin))
+}
+
 // TopOriginEqualFold applies the EqualFold predicate on the "top_origin" field.
 func TopOriginEqualFold(v string) predicate.Passkey {
 	return predicate.Passkey(sql.FieldEqualFold(FieldTopOrigin, v))

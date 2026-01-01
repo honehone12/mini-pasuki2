@@ -6,9 +6,9 @@ type RelyingParty struct {
 }
 
 type User struct {
-	Id          string `json:"id"`
+	Id          string `json:"id,omitempty"`
 	Name        string `json:"name"`
-	DisplayName string `json:"displayName"`
+	DisplayName string `json:"displayName,omitempty"`
 }
 
 type PublicKeyCredentialParams struct {

@@ -387,9 +387,22 @@ func (m *PasskeyMutation) OldTopOrigin(ctx context.Context) (v string, err error
 	return oldValue.TopOrigin, nil
 }
 
+// ClearTopOrigin clears the value of the "top_origin" field.
+func (m *PasskeyMutation) ClearTopOrigin() {
+	m.top_origin = nil
+	m.clearedFields[passkey.FieldTopOrigin] = struct{}{}
+}
+
+// TopOriginCleared returns if the "top_origin" field was cleared in this mutation.
+func (m *PasskeyMutation) TopOriginCleared() bool {
+	_, ok := m.clearedFields[passkey.FieldTopOrigin]
+	return ok
+}
+
 // ResetTopOrigin resets all changes to the "top_origin" field.
 func (m *PasskeyMutation) ResetTopOrigin() {
 	m.top_origin = nil
+	delete(m.clearedFields, passkey.FieldTopOrigin)
 }
 
 // SetAttestationFmt sets the "attestation_fmt" field.
@@ -1082,6 +1095,9 @@ func (m *PasskeyMutation) ClearedFields() []string {
 	if m.FieldCleared(passkey.FieldDeletedAt) {
 		fields = append(fields, passkey.FieldDeletedAt)
 	}
+	if m.FieldCleared(passkey.FieldTopOrigin) {
+		fields = append(fields, passkey.FieldTopOrigin)
+	}
 	return fields
 }
 
@@ -1098,6 +1114,9 @@ func (m *PasskeyMutation) ClearField(name string) error {
 	switch name {
 	case passkey.FieldDeletedAt:
 		m.ClearDeletedAt()
+		return nil
+	case passkey.FieldTopOrigin:
+		m.ClearTopOrigin()
 		return nil
 	}
 	return fmt.Errorf("unknown Passkey nullable field %s", name)

@@ -28,7 +28,7 @@ func (Passkey) Fields() []ent.Field {
 		field.Bool("cross_origin").
 			Immutable(),
 		field.String("top_origin").
-			NotEmpty().
+			Optional().
 			MaxLen(256).
 			Immutable(),
 		field.Enum("attestation_fmt").
@@ -45,13 +45,15 @@ func (Passkey) Fields() []ent.Field {
 		field.Bytes("credential_id").
 			NotEmpty().
 			Immutable().
-			MaxLen(32).
-			Unique(),
+			MaxLen(64).
+			Unique().
+			SchemaType(map[string]string{dialect.MySQL: "varbinary(64)"}),
 		field.Bytes("public_key").
 			NotEmpty().
-			MaxLen(2024).
+			MaxLen(512).
 			Immutable().
-			Unique(),
+			Unique().
+			SchemaType(map[string]string{dialect.MySQL: "varbinary(512)"}),
 		field.Bool("extension_bit"),
 		field.UUID("user_id", binid.BinId{}).
 			Immutable().

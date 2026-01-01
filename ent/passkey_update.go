@@ -187,6 +187,9 @@ func (_u *PasskeyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.DeletedAtCleared() {
 		_spec.ClearField(passkey.FieldDeletedAt, field.TypeTime)
 	}
+	if _u.mutation.TopOriginCleared() {
+		_spec.ClearField(passkey.FieldTopOrigin, field.TypeString)
+	}
 	if value, ok := _u.mutation.BackupEligibilityBit(); ok {
 		_spec.SetField(passkey.FieldBackupEligibilityBit, field.TypeBool, value)
 	}
@@ -410,6 +413,9 @@ func (_u *PasskeyUpdateOne) sqlSave(ctx context.Context) (_node *Passkey, err er
 	}
 	if _u.mutation.DeletedAtCleared() {
 		_spec.ClearField(passkey.FieldDeletedAt, field.TypeTime)
+	}
+	if _u.mutation.TopOriginCleared() {
+		_spec.ClearField(passkey.FieldTopOrigin, field.TypeString)
 	}
 	if value, ok := _u.mutation.BackupEligibilityBit(); ok {
 		_spec.SetField(passkey.FieldBackupEligibilityBit, field.TypeBool, value)
