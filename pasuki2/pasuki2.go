@@ -10,8 +10,10 @@ import (
 	"mini-pasuki2/challenge"
 	"mini-pasuki2/ent"
 	"mini-pasuki2/ent/passkey"
+	"mini-pasuki2/ent/user"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -29,6 +31,7 @@ const ATTESTATION_NONE = "none"
 const AUTHENTICATOR_REQUIRED = "required"
 
 const REDIS_REGISTRATION_CHALLENGE_KEY = "REGCHAL"
+const REDIS_VERIFY_CHALLENGE_KEY = "VERCHAL"
 
 type Pasuki2 struct {
 	passKeyClient *ent.PasskeyClient
@@ -37,29 +40,44 @@ type Pasuki2 struct {
 	rpIdHash      []byte
 }
 
-type RegisterStartParams struct {
+type Passkey2Params struct {
 	UserId binid.BinId
 	Email  string
-	Name   string
+}
+
+type RegisterStartParams struct {
+	Passkey2Params
+	Name string
 }
 
 type RegisterFinishParams struct {
-	UserId            binid.BinId
-	Email             string
+	Passkey2Params
 	Id                string
 	Type              string
 	AttestationObject string
 	ClientDataJson    string
 }
 
+type VerifyStartParams = Passkey2Params
+
 type E struct {
 	ValidationErr error
 	SystemErr     error
 }
 
+type RegisterStartResult struct {
+	Options *RegistrationOptions
+	E
+}
+
 type RegisterFinishResult struct {
 	ClientData        *RegistrationClientData
 	AttestationObject *RegistrationAttestationObject
+	E
+}
+
+type VerifyStartResult struct {
+	Options *VerifyOptions
 	E
 }
 
@@ -76,22 +94,32 @@ func NewPasuki2(
 func (p2 *Pasuki2) RegisterStart(
 	ctx context.Context,
 	p RegisterStartParams,
-) (*RegistrationOptions, error) {
+) *RegisterStartResult {
+	r := &RegisterStartResult{}
+
 	chal, err := challenge.Gen()
 	if err != nil {
-		return nil, err
+		r.SystemErr = err
+		return r
 	}
-
 	encChal := base64.RawURLEncoding.EncodeToString(chal)
+
 	key := fmt.Sprintf("%s:%s", REDIS_REGISTRATION_CHALLENGE_KEY, p.Email)
-	err = p2.redis.SetEx(
+	err = p2.redis.SetArgs(
 		ctx,
 		key,
 		encChal,
-		time.Millisecond*DEFAULT_TIME_OUT_MIL,
+		redis.SetArgs{
+			Mode: "NX",
+			TTL:  time.Millisecond * DEFAULT_TIME_OUT_MIL,
+		},
 	).Err()
-	if err != nil {
-		return nil, err
+	if errors.Is(err, redis.Nil) {
+		r.ValidationErr = errors.New("challenge already exists")
+		return r
+	} else if err != nil {
+		r.SystemErr = err
+		return r
 	}
 
 	op := &RegistrationOptions{
@@ -121,12 +149,13 @@ func (p2 *Pasuki2) RegisterStart(
 		Extensions:         nil,
 	}
 
-	return op, nil
+	r.Options = op
+	return r
 }
 
 func (p2 *Pasuki2) RegisterFinish(
 	ctx context.Context,
-	p RegisterFinishParams,
+	p *RegisterFinishParams,
 ) *RegisterFinishResult {
 	r := &RegisterFinishResult{}
 
@@ -136,8 +165,6 @@ func (p2 *Pasuki2) RegisterFinish(
 	}
 
 	key := fmt.Sprintf("%s:%s", REDIS_REGISTRATION_CHALLENGE_KEY, p.Email)
-	// we use getdel because passkey will never fail
-	// without malicious operation
 	cachedChal, err := p2.redis.GetDel(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
 		r.ValidationErr = err
@@ -192,5 +219,68 @@ func (p2 *Pasuki2) RegisterFinish(
 
 	r.ClientData = clientData
 	r.AttestationObject = attObj
+	return r
+}
+
+func (p2 *Pasuki2) VerifyStart(
+	ctx context.Context,
+	p VerifyStartParams,
+) *VerifyStartResult {
+	r := &VerifyStartResult{}
+
+	pk, err := p2.passKeyClient.Query().
+		Select(passkey.FieldCredentialID).
+		Where(
+			passkey.UserID(p.UserId),
+			passkey.DeletedAtIsNil(),
+		).
+		Order(sql.OrderByField(user.FieldCreatedAt, sql.OrderDesc()).ToFunc()).
+		Limit(1).
+		Only(ctx)
+	if ent.IsNotFound(err) {
+		r.ValidationErr = errors.New("could not find passkey")
+		return r
+	} else if err != nil {
+		r.SystemErr = err
+		return r
+	}
+
+	chal, err := challenge.Gen()
+	if err != nil {
+		r.SystemErr = err
+		return r
+	}
+	encChal := base64.RawURLEncoding.EncodeToString(chal)
+
+	key := fmt.Sprintf("%s:%x", REDIS_VERIFY_CHALLENGE_KEY, p.UserId)
+	err = p2.redis.SetArgs(
+		ctx,
+		key,
+		encChal,
+		redis.SetArgs{
+			Mode: "NX",
+			TTL:  time.Millisecond * DEFAULT_TIME_OUT_MIL,
+		},
+	).Err()
+	if errors.Is(err, redis.Nil) {
+		r.ValidationErr = errors.New("challenge already exists")
+		return r
+	} else if err != nil {
+		r.SystemErr = err
+		return r
+	}
+
+	op := &VerifyOptions{
+		AllowCredentials: []Credential{{
+			Id:         pk.CredentialID,
+			Transports: nil,
+			Type:       PUBLIC_KEY_TYPE,
+		}},
+		Challenge:        encChal,
+		Timeout:          DEFAULT_TIME_OUT_MIL,
+		UserVerification: AUTHENTICATOR_REQUIRED,
+	}
+
+	r.Options = op
 	return r
 }

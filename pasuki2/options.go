@@ -40,3 +40,10 @@ type RegistrationOptions struct {
 	ExcludeCredentials        []Credential                `json:"excludeCredentials,omitempty"`
 	Extensions                map[string]any              `json:"extensions,omitempty"`
 }
+
+type VerifyOptions struct {
+	AllowCredentials []Credential `json:"allowCredentials"`
+	Challenge        string       `json:"challenge"`
+	Timeout          uint         `json:"timeout"`
+	UserVerification string       `json:"userVerification"`
+}

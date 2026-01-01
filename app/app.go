@@ -27,12 +27,14 @@ type App struct {
 	validator *validator.Validate
 }
 
-type RegisterStartRequest struct {
+type Request struct {
 	Email string `form:"email" validate:"required,email,max=256"`
 }
 
+type RegisterStartRequest = Request
+
 type RegisterFinishRequest struct {
-	Email string `form:"email" validate:"required,email,max=256"`
+	Request
 	// (!) this is passkey credential id, not our database id
 	Id                      string `form:"id" validate:"required,base64rawurl,min=22"`
 	Type                    string `form:"type" validate:"required,eq=public-key"`
@@ -40,6 +42,8 @@ type RegisterFinishRequest struct {
 	AttestationObject       string `form:"attestationObject" validate:"required,base64rawurl,min=100,max=5000"`
 	ClientDataJson          string `form:"clientDataJson" validate:"required,base64rawurl,min=100,max=500"`
 }
+
+type VerifyStartRequest = Request
 
 func NewApp() (*App, error) {
 	// don't inject other than env
@@ -110,6 +114,28 @@ func (a *App) bind(ctx echo.Context, target any) error {
 	return nil
 }
 
+func (a *App) getUser(ctx context.Context, email string) (*ent.User, error) {
+	u, err := a.ent.User.Query().
+		Select(
+			user.FieldID,
+			user.FieldLoginMethod,
+		).
+		Where(
+			user.Email(email),
+			user.DeletedAtIsNil(),
+		).
+		Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if u.LoginMethod != user.LoginMethodPasskey {
+		return nil, errors.New("login method is not passkey")
+	}
+
+	return u, nil
+}
+
 func (a *App) RegisterStart(ctx echo.Context) error {
 	form := RegisterStartRequest{}
 
@@ -125,7 +151,10 @@ func (a *App) RegisterStart(ctx echo.Context) error {
 			user.FieldName,
 			user.FieldLoginMethod,
 		).
-		Where(user.Email(form.Email)).
+		Where(
+			user.Email(form.Email),
+			user.DeletedAtIsNil(),
+		).
 		Only(c)
 	if ent.IsNotFound(err) {
 		ctx.Logger().Warn("could not find user email")
@@ -145,13 +174,23 @@ func (a *App) RegisterStart(ctx echo.Context) error {
 		}
 	}
 
-	op, err := a.pasuki.RegisterStart(c, pasuki2.RegisterStartParams{
-		UserId: u.ID,
-		Email:  form.Email,
-		Name:   u.Name,
+	r := a.pasuki.RegisterStart(c, pasuki2.RegisterStartParams{
+		Passkey2Params: pasuki2.Passkey2Params{
+			UserId: u.ID,
+			Email:  form.Email,
+		},
+		Name: u.Name,
 	})
+	if r.ValidationErr != nil {
+		ctx.Logger().Warn(r.ValidationErr)
+		return echo.ErrBadRequest
+	}
+	if r.SystemErr != nil {
+		ctx.Logger().Error(r.SystemErr)
+		return echo.ErrInternalServerError
+	}
 
-	return ctx.JSON(http.StatusOK, op)
+	return ctx.JSON(http.StatusOK, r.Options)
 }
 
 func (a *App) RegisterFinish(ctx echo.Context) error {
@@ -163,10 +202,8 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 	}
 
 	c := ctx.Request().Context()
-	u, err := a.ent.User.Query().
-		Select(user.FieldID).
-		Where(user.Email(form.Email)).
-		Only(c)
+
+	u, err := a.getUser(c, form.Email)
 	if ent.IsNotFound(err) {
 		ctx.Logger().Warn("could not find user email")
 		return echo.ErrBadRequest
@@ -175,14 +212,17 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	r := a.pasuki.RegisterFinish(c, pasuki2.RegisterFinishParams{
-		Email:             form.Email,
-		UserId:            u.ID,
+	p := pasuki2.RegisterFinishParams{
+		Passkey2Params: pasuki2.Passkey2Params{
+			UserId: u.ID,
+			Email:  form.Email,
+		},
 		Id:                form.Id,
 		Type:              form.Type,
 		AttestationObject: form.AttestationObject,
 		ClientDataJson:    form.ClientDataJson,
-	})
+	}
+	r := a.pasuki.RegisterFinish(c, &p)
 	if r.ValidationErr != nil {
 		ctx.Logger().Warn(r.ValidationErr)
 		return echo.ErrBadRequest
@@ -192,8 +232,40 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	ctx.Logger().Infof("%#v\n", r.ClientData)
-	ctx.Logger().Infof("%#v\n", r.AttestationObject)
-
 	return ctx.NoContent(http.StatusOK)
+}
+
+func (a *App) VerifyStart(ctx echo.Context) error {
+	form := VerifyStartRequest{}
+
+	if err := a.bind(ctx, &form); err != nil {
+		ctx.Logger().Warn(err)
+		return echo.ErrBadRequest
+	}
+
+	c := ctx.Request().Context()
+
+	u, err := a.getUser(c, form.Email)
+	if ent.IsNotFound(err) {
+		ctx.Logger().Warn("could not find user email")
+		return echo.ErrBadRequest
+	} else if err != nil {
+		ctx.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+
+	r := a.pasuki.VerifyStart(c, pasuki2.VerifyStartParams{
+		UserId: u.ID,
+		Email:  form.Email,
+	})
+	if r.ValidationErr != nil {
+		ctx.Logger().Warn(err)
+		return echo.ErrBadRequest
+	}
+	if r.SystemErr != nil {
+		ctx.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+
+	return ctx.JSON(http.StatusOK, r.Options)
 }
