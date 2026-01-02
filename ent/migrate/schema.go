@@ -40,6 +40,13 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "passkey_credential_id",
+				Unique:  true,
+				Columns: []*schema.Column{PasskeysColumns[12]},
+			},
+		},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{

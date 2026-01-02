@@ -33,6 +33,7 @@ func run() {
 	echo.POST("/api/passkey/register/start", app.RegisterStart)
 	echo.POST("/api/passkey/register/finish", app.RegisterFinish)
 	echo.GET("/api/passkey/verify/start", app.VerifyStart)
+	echo.POST("/api/passkey/verify/finish", app.VerifyFinish)
 
 	echo.Group("/*", echo4middleware.Proxy(balancer))
 

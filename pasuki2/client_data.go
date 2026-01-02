@@ -2,7 +2,6 @@ package pasuki2
 
 import (
 	"crypto/subtle"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 )
@@ -21,14 +20,10 @@ type ParsedClientData struct {
 }
 
 func (p2 *Pasuki2) verifyClientData(
-	encData string,
+	raw []byte,
 	cachedChal string,
+	datatype string,
 ) (*ParsedClientData, error) {
-	raw, err := base64.RawURLEncoding.DecodeString(encData)
-	if err != nil {
-		return nil, err
-	}
-
 	clientData := &ParsedClientData{}
 	if err := json.Unmarshal(raw, clientData); err != nil {
 		return nil, err
@@ -40,7 +35,7 @@ func (p2 *Pasuki2) verifyClientData(
 		return nil, errors.New("cross orign is not expected")
 	}
 
-	if clientData.Type != CLIENT_DATA_TYPE_CREATE {
+	if clientData.Type != datatype {
 		return nil, errors.New("unexpected client data type")
 	}
 

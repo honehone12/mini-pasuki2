@@ -3,7 +3,6 @@ package pasuki2
 import (
 	"bytes"
 	"crypto/subtle"
-	"encoding/base64"
 	"encoding/binary"
 	"errors"
 
@@ -15,7 +14,7 @@ const (
 	SIGN_COUNT_LEN           = 4
 	AAGUID_LEN               = 16
 	CREDENTIAL_ID_LENGTH_LEN = 2
-	__REGISTRATION_KNOWN_LEN = RP_ID_HASH_LEN + 1 + SIGN_COUNT_LEN + AAGUID_LEN + CREDENTIAL_ID_LENGTH_LEN
+	__AUTHDATA_KNOWN_LEN     = RP_ID_HASH_LEN + 1 + SIGN_COUNT_LEN + AAGUID_LEN + CREDENTIAL_ID_LENGTH_LEN
 )
 
 const (
@@ -51,9 +50,12 @@ type ParsedAuthenticatorData struct {
 	Extensions          map[string]any
 }
 
-func (p2 *Pasuki2) verifyAuthenticatorData(data []byte) (*ParsedAuthenticatorData, error) {
+func (p2 *Pasuki2) verifyAuthenticatorData(
+	data []byte,
+	id []byte,
+) (*ParsedAuthenticatorData, error) {
 	l := len(data)
-	if l < __REGISTRATION_KNOWN_LEN {
+	if l < __AUTHDATA_KNOWN_LEN {
 		return nil, errors.New("invalid auth data length")
 	}
 
@@ -90,8 +92,15 @@ func (p2 *Pasuki2) verifyAuthenticatorData(data []byte) (*ParsedAuthenticatorDat
 	if l <= p+credIdLen {
 		return nil, errors.New("auth data is not enough for credential")
 	}
+	if subtle.ConstantTimeEq(int32(len(id)), int32(credIdLen)) == 0 {
+		return nil, errors.New("invalid credential id length")
+	}
 
 	credentialId := data[p : p+credIdLen]
+	if subtle.ConstantTimeCompare(id, credentialId) == 0 {
+		return nil, errors.New("invalid credential id")
+	}
+
 	p += credIdLen
 
 	var rawPk cbor.RawMessage
@@ -147,19 +156,15 @@ func (p2 *Pasuki2) verifyAuthenticatorData(data []byte) (*ParsedAuthenticatorDat
 }
 
 func (p2 *Pasuki2) verifyAttestationObject(
-	encObj string,
+	raw []byte,
+	id []byte,
 ) (*ParsedAttestationObject, error) {
-	raw, err := base64.RawURLEncoding.DecodeString(encObj)
-	if err != nil {
-		return nil, err
-	}
-
 	att := AttestationObject{}
 	if err := cbor.Unmarshal(raw, &att); err != nil {
 		return nil, err
 	}
 
-	authData, err := p2.verifyAuthenticatorData(att.AuthData)
+	authData, err := p2.verifyAuthenticatorData(att.AuthData, id)
 	if err != nil {
 		return nil, err
 	}

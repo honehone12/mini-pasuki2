@@ -7,6 +7,7 @@ import (
 	"mini-pasuki2/ent"
 	"mini-pasuki2/ent/passkey"
 	"mini-pasuki2/ent/user"
+	"mini-pasuki2/form"
 	"mini-pasuki2/pasuki2"
 	"net/http"
 	"os"
@@ -23,34 +24,13 @@ import (
 
 const ENT_MAX_CONN = 3
 
+const __SESSION_PLACEHOLDER = "use-cookie-session-value"
+
 type App struct {
 	ent       *ent.Client
 	pasuki    *pasuki2.Pasuki2
 	validator *validator.Validate
 }
-
-type Request struct {
-	Email string `form:"email" validate:"required,email,max=256"`
-}
-
-type RegisterRequest struct {
-	Request
-	Name string `form:"name" validate:"required,max=256"`
-}
-
-type RegisterStartRequest = RegisterRequest
-
-type RegisterFinishRequest struct {
-	RegisterRequest
-	// (!) this is passkey credential id, not our database id
-	Id                      string `form:"id" validate:"required,base64rawurl,min=22"`
-	Type                    string `form:"type" validate:"required,eq=public-key"`
-	AuthenticatorAttachment string `form:"authenticatorAttachment" validata:"omitempty,oneof=platform cross-platform"`
-	AttestationObject       string `form:"attestationObject" validate:"required,base64rawurl,min=100,max=5000"`
-	ClientDataJson          string `form:"clientDataJson" validate:"required,base64rawurl,min=100,max=500"`
-}
-
-type VerifyStartRequest = Request
 
 func NewApp() (*App, error) {
 	// don't inject other than env
@@ -121,7 +101,7 @@ func (a *App) bind(ctx echo.Context, target any) error {
 	return nil
 }
 
-func (*App) rollback(tx *ent.Tx, original error) error {
+func rollback(tx *ent.Tx, original error) error {
 	if err := tx.Rollback(); err != nil {
 		return errors.Join(original, err)
 	}
@@ -152,7 +132,7 @@ func (a *App) getUser(ctx context.Context, email string) (*ent.User, error) {
 }
 
 func (a *App) RegisterStart(ctx echo.Context) error {
-	form := RegisterStartRequest{}
+	form := form.RegisterStartRequest{}
 
 	if err := a.bind(ctx, &form); err != nil {
 		ctx.Logger().Warn(err)
@@ -173,7 +153,7 @@ func (a *App) RegisterStart(ctx echo.Context) error {
 }
 
 func (a *App) RegisterFinish(ctx echo.Context) error {
-	form := RegisterFinishRequest{}
+	form := form.RegisterFinishRequest{}
 
 	if err := a.bind(ctx, &form); err != nil {
 		ctx.Logger().Warn(err)
@@ -181,15 +161,7 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 	}
 
 	c := ctx.Request().Context()
-	p := pasuki2.RegisterFinishParams{
-		Email:             form.Email,
-		Name:              form.Name,
-		Id:                form.Id,
-		Type:              form.Type,
-		AttestationObject: form.AttestationObject,
-		ClientDataJson:    form.ClientDataJson,
-	}
-	r := a.pasuki.RegisterFinish(c, &p)
+	r := a.pasuki.RegisterFinish(c, &form)
 	if r.ValidationErr != nil {
 		ctx.Logger().Warn(r.ValidationErr)
 		return echo.ErrBadRequest
@@ -221,9 +193,10 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 		SetID(userId).
 		SetName(form.Name).
 		SetEmail(form.Email).
+		SetLoginMethod(user.LoginMethodPasskey).
 		Exec(c)
 	if err != nil {
-		err = a.rollback(tx, err)
+		err = rollback(tx, err)
 		ctx.Logger().Error(err)
 		return echo.ErrInternalServerError
 	}
@@ -243,7 +216,7 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 		SetUserID(userId).
 		Exec(c)
 	if err != nil {
-		err = a.rollback(tx, err)
+		err = rollback(tx, err)
 		ctx.Logger().Error(err)
 		return echo.ErrInternalServerError
 	}
@@ -257,33 +230,41 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 }
 
 func (a *App) VerifyStart(ctx echo.Context) error {
-	form := VerifyStartRequest{}
+	op, err := a.pasuki.VerifyStart(
+		ctx.Request().Context(),
+		[]byte(__SESSION_PLACEHOLDER),
+	)
+	if err != nil {
+		ctx.Logger().Warn(err)
+		return echo.ErrInternalServerError
+	}
+
+	return ctx.JSON(http.StatusOK, op)
+}
+
+func (a *App) VerifyFinish(ctx echo.Context) error {
+	form := form.VerifyFinishRequest{}
 
 	if err := a.bind(ctx, &form); err != nil {
 		ctx.Logger().Warn(err)
 		return echo.ErrBadRequest
 	}
 
-	c := ctx.Request().Context()
+	ctx.Logger().Infof("%#v", form)
 
-	u, err := a.getUser(c, form.Email)
-	if ent.IsNotFound(err) {
-		ctx.Logger().Warn("could not find user email")
-		return echo.ErrBadRequest
-	} else if err != nil {
-		ctx.Logger().Error(err)
-		return echo.ErrInternalServerError
-	}
-
-	r := a.pasuki.VerifyStart(c, u.ID, form.Email)
-	if r.ValidationErr != nil {
-		ctx.Logger().Warn(err)
-		return echo.ErrBadRequest
-	}
+	r := a.pasuki.VerifyFinish(
+		ctx.Request().Context(),
+		&form,
+		[]byte(__SESSION_PLACEHOLDER),
+	)
 	if r.SystemErr != nil {
-		ctx.Logger().Error(err)
+		ctx.Logger().Error(r.SystemErr)
 		return echo.ErrInternalServerError
 	}
+	if r.ValidationErr != nil {
+		ctx.Logger().Warn(r.ValidationErr)
+		return echo.ErrBadRequest
+	}
 
-	return ctx.JSON(http.StatusOK, r.Options)
+	return ctx.NoContent(http.StatusOK)
 }

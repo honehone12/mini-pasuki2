@@ -100,7 +100,7 @@ func parseCoseKey(raw []byte) (CoseKey, error) {
 	return c, nil
 }
 
-func (k CoseKey) getEcdsaPubKey() (*ecdsa.PublicKey, error) {
+func (k CoseKey) getEcdsaPubKeyUnchecked() (*ecdsa.PublicKey, error) {
 	var crv elliptic.Curve
 	{
 		rawCrv, ok := k[COSE_EC2_CRV]
