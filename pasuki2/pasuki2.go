@@ -254,6 +254,9 @@ func (p2 *Pasuki2) VerifyFinish(
 	if errors.Is(err, redis.Nil) {
 		r.ValidationErr = errors.New("challenge not found")
 		return r
+	} else if err != nil {
+		r.SystemErr = err
+		return r
 	}
 
 	rawclientD, err := base64.RawURLEncoding.DecodeString(f.ClientDataJson)
@@ -272,7 +275,7 @@ func (p2 *Pasuki2) VerifyFinish(
 		r.ValidationErr = err
 		return r
 	}
-	_, err = p2.verifyAuthenticatorData(rawauthD, id)
+	_, _, err = p2.verifyAuthenticatorData(rawauthD, true)
 	if err != nil {
 		r.ValidationErr = err
 		return r
@@ -332,7 +335,7 @@ func verifySignature(publicKey, src, signature []byte) (bool, error) {
 	switch kty {
 	case uint64(COSE_KEYTYPE_EC2):
 		{
-			pk, err := cose.getEcdsaPubKeyUnchecked()
+			pk, err := cose.getEcdsaPubKey()
 			if err != nil {
 				return false, err
 			}
@@ -340,7 +343,7 @@ func verifySignature(publicKey, src, signature []byte) (bool, error) {
 		}
 	case uint64(COSE_KEYTYPE_RSA):
 		{
-			pk, err := cose.getRsaPubKeyUnchecked()
+			pk, err := cose.getRsaPubKey()
 			if err != nil {
 				return false, err
 			}
