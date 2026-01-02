@@ -14,7 +14,8 @@ const (
 	SIGN_COUNT_LEN           = 4
 	AAGUID_LEN               = 16
 	CREDENTIAL_ID_LENGTH_LEN = 2
-	__AUTHDATA_KNOWN_LEN     = RP_ID_HASH_LEN + 1 + SIGN_COUNT_LEN + AAGUID_LEN + CREDENTIAL_ID_LENGTH_LEN
+	__AUTHDATA_MIN_LEN       = RP_ID_HASH_LEN + 1 + SIGN_COUNT_LEN
+	__AUTHDATA_KNOWN_LEN     = __AUTHDATA_MIN_LEN + AAGUID_LEN + CREDENTIAL_ID_LENGTH_LEN
 )
 
 const (
@@ -35,54 +36,124 @@ type AttestationObject struct {
 type ParsedAttestationObject struct {
 	Fmt     string
 	AttStmt map[string]any
-	*ParsedAuthenticatorData
+	*ParsedAuthAttestationData
 }
 
-type ParsedAuthenticatorData struct {
-	BeBit               bool
-	BsBit               bool
-	SignCount           uint32
+type ParsedAuthAssertionData struct {
+	BeBit      bool
+	BsBit      bool
+	SignCount  uint32
+	ExtBit     bool
+	Extensions map[string]any
+}
+
+type ParsedAuthAttestationData struct {
+	*ParsedAuthAssertionData
 	Aaguid              []byte
 	CredentialId        []byte
 	CredentialPublicKey []byte
 	CoseKey             CoseKey
-	ExtBit              bool
-	Extensions          map[string]any
 }
 
 func (p2 *Pasuki2) verifyAuthenticatorData(
 	data []byte,
-	id []byte,
-) (*ParsedAuthenticatorData, error) {
+	fromGet bool,
+) (*ParsedAuthAssertionData, int, error) {
 	l := len(data)
-	if l < __AUTHDATA_KNOWN_LEN {
-		return nil, errors.New("invalid auth data length")
+	if l < __AUTHDATA_MIN_LEN {
+		return nil, 0, errors.New("invalid auth data assertion length")
 	}
 
 	p := RP_ID_HASH_LEN
 	rpIdHash := data[:p]
 	if subtle.ConstantTimeCompare(p2.rpIdHash, rpIdHash) == 0 {
-		return nil, errors.New("unexpected rp id hash")
+		return nil, p, errors.New("unexpected rp id hash")
 	}
 
 	flags := data[p]
 	if flags&FLAG_USER_PRESENCE == 0 {
-		return nil, errors.New("unexpected up bit")
+		return nil, p, errors.New("unexpected up bit")
 	}
 	if flags&FLAG_USER_VERIFICATION == 0 {
-		return nil, errors.New("unexpected uv bit")
+		return nil, p, errors.New("unexpected uv bit")
 	}
 	p += 1
 
 	beBit := flags&FLAG_BACKUP_ELIGIBILITY == 1
 	bsBit := flags&FLAG_BACKUP_STATE == 1
+	extBit := flags&FLAG_EXTENSION_DATA == 1
 
-	if flags&FLAG_ATTESTED_CREDENTIAL_DATA == 0 {
-		return nil, errors.New("unexpected attested credential data bit")
+	if !fromGet && (flags&FLAG_ATTESTED_CREDENTIAL_DATA == 0) {
+		return nil, p, errors.New("unexpected attested credential data bit")
 	}
 
 	signCount := binary.BigEndian.Uint32(data[p : p+SIGN_COUNT_LEN])
 	p += SIGN_COUNT_LEN
+
+	var extensions map[string]any
+	if fromGet && extBit {
+		if l == p {
+			return nil, p, errors.New("auth data is not enough for extension data")
+		}
+
+		ext, exp, err := parseExtension(p, data)
+		if err != nil {
+			return nil, p, err
+		}
+
+		extensions = ext
+		p = exp
+	}
+
+	if l != p {
+		return nil, p, errors.New("l != p, unexpected data structure")
+	}
+
+	d := &ParsedAuthAssertionData{
+		BeBit:      beBit,
+		BsBit:      bsBit,
+		SignCount:  signCount,
+		ExtBit:     extBit,
+		Extensions: extensions,
+	}
+	return d, p, nil
+}
+
+func parseExtension(p int, data []byte) (map[string]any, int, error) {
+	var rawExt cbor.RawMessage
+	err := cbor.NewDecoder(bytes.NewReader(data[:p])).
+		Decode(&rawExt)
+	if err != nil {
+		return nil, p, err
+	}
+	p += len(rawExt)
+
+	var extensions map[string]any
+	if err := cbor.Unmarshal(rawExt, &extensions); err != nil {
+		return nil, p, err
+	}
+
+	return extensions, p, nil
+}
+
+func (p2 *Pasuki2) verifyAttestationObject(
+	data []byte,
+	id []byte,
+) (*ParsedAttestationObject, error) {
+	att := AttestationObject{}
+	if err := cbor.Unmarshal(data, &att); err != nil {
+		return nil, err
+	}
+
+	l := len(att.AuthData)
+	if l < __AUTHDATA_KNOWN_LEN {
+		return nil, errors.New("invalid auth data attestation length")
+	}
+
+	asseD, p, err := p2.verifyAuthenticatorData(att.AuthData, false)
+	if err != nil {
+		return nil, err
+	}
 
 	aaguid := data[p : p+AAGUID_LEN]
 	p += AAGUID_LEN
@@ -92,20 +163,12 @@ func (p2 *Pasuki2) verifyAuthenticatorData(
 	if l <= p+credIdLen {
 		return nil, errors.New("auth data is not enough for credential")
 	}
-	if subtle.ConstantTimeEq(int32(len(id)), int32(credIdLen)) == 0 {
-		return nil, errors.New("invalid credential id length")
-	}
 
 	credentialId := data[p : p+credIdLen]
-	if subtle.ConstantTimeCompare(id, credentialId) == 0 {
-		return nil, errors.New("invalid credential id")
-	}
-
 	p += credIdLen
 
 	var rawPk cbor.RawMessage
-	err := cbor.NewDecoder(bytes.NewReader(data[p:])).
-		Decode(&rawPk)
+	err = cbor.NewDecoder(bytes.NewReader(data[p:])).Decode(&rawPk)
 	if err != nil {
 		return nil, err
 	}
@@ -116,64 +179,41 @@ func (p2 *Pasuki2) verifyAuthenticatorData(
 		return nil, err
 	}
 
-	extBit := flags&FLAG_EXTENSION_DATA == 1
-	var extensions map[string]any
-	if extBit {
+	if asseD.ExtBit {
 		if l == p {
 			return nil, errors.New("auth data is not enough for extension data")
 		}
 
-		var rawExt cbor.RawMessage
-		err = cbor.NewDecoder(bytes.NewReader(data[:p])).
-			Decode(&rawExt)
+		extensions, exp, err := parseExtension(p, data)
 		if err != nil {
 			return nil, err
 		}
-		p += len(rawExt)
-
-		if err := cbor.Unmarshal(rawExt, &extensions); err != nil {
-			return nil, err
-		}
+		asseD.Extensions = extensions
+		p = exp
 	}
 
 	if l != p {
 		return nil, errors.New("l != p, unexpected data structure")
 	}
 
-	authData := &ParsedAuthenticatorData{
-		BeBit:               beBit,
-		BsBit:               bsBit,
-		SignCount:           signCount,
-		Aaguid:              aaguid,
-		CredentialId:        credentialId,
-		CredentialPublicKey: rawPk,
-		CoseKey:             coseKey,
-		ExtBit:              extBit,
-		Extensions:          extensions,
+	if subtle.ConstantTimeEq(int32(len(id)), int32(len(credentialId))) == 0 {
+		return nil, errors.New("invalid credential id length")
+	}
+	if subtle.ConstantTimeCompare(id, credentialId) == 0 {
+		return nil, errors.New("invalid credential id")
 	}
 
-	return authData, nil
-}
-
-func (p2 *Pasuki2) verifyAttestationObject(
-	raw []byte,
-	id []byte,
-) (*ParsedAttestationObject, error) {
-	att := AttestationObject{}
-	if err := cbor.Unmarshal(raw, &att); err != nil {
-		return nil, err
+	d := &ParsedAuthAttestationData{
+		ParsedAuthAssertionData: asseD,
+		Aaguid:                  aaguid,
+		CredentialId:            credentialId,
+		CredentialPublicKey:     rawPk,
+		CoseKey:                 coseKey,
 	}
-
-	authData, err := p2.verifyAuthenticatorData(att.AuthData, id)
-	if err != nil {
-		return nil, err
-	}
-
 	o := &ParsedAttestationObject{
-		Fmt:                     att.Fmt,
-		AttStmt:                 att.AttStmt,
-		ParsedAuthenticatorData: authData,
+		Fmt:                       att.Fmt,
+		AttStmt:                   att.AttStmt,
+		ParsedAuthAttestationData: d,
 	}
-
 	return o, nil
 }

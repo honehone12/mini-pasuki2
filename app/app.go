@@ -250,8 +250,6 @@ func (a *App) VerifyFinish(ctx echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	ctx.Logger().Infof("%#v", form)
-
 	r := a.pasuki.VerifyFinish(
 		ctx.Request().Context(),
 		&form,
