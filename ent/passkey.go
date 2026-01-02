@@ -27,10 +27,6 @@ type Passkey struct {
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// Origin holds the value of the "origin" field.
 	Origin string `json:"origin,omitempty"`
-	// CrossOrigin holds the value of the "cross_origin" field.
-	CrossOrigin bool `json:"cross_origin,omitempty"`
-	// TopOrigin holds the value of the "top_origin" field.
-	TopOrigin string `json:"top_origin,omitempty"`
 	// AttestationFmt holds the value of the "attestation_fmt" field.
 	AttestationFmt passkey.AttestationFmt `json:"attestation_fmt,omitempty"`
 	// BackupEligibilityBit holds the value of the "backup_eligibility_bit" field.
@@ -84,11 +80,11 @@ func (*Passkey) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case passkey.FieldID, passkey.FieldUserID:
 			values[i] = new(binid.BinId)
-		case passkey.FieldCrossOrigin, passkey.FieldBackupEligibilityBit, passkey.FieldBackupStateBit, passkey.FieldExtensionBit:
+		case passkey.FieldBackupEligibilityBit, passkey.FieldBackupStateBit, passkey.FieldExtensionBit:
 			values[i] = new(sql.NullBool)
 		case passkey.FieldSignCount:
 			values[i] = new(sql.NullInt64)
-		case passkey.FieldOrigin, passkey.FieldTopOrigin, passkey.FieldAttestationFmt:
+		case passkey.FieldOrigin, passkey.FieldAttestationFmt:
 			values[i] = new(sql.NullString)
 		case passkey.FieldCreatedAt, passkey.FieldUpdatedAt, passkey.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
@@ -137,18 +133,6 @@ func (_m *Passkey) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field origin", values[i])
 			} else if value.Valid {
 				_m.Origin = value.String
-			}
-		case passkey.FieldCrossOrigin:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field cross_origin", values[i])
-			} else if value.Valid {
-				_m.CrossOrigin = value.Bool
-			}
-		case passkey.FieldTopOrigin:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field top_origin", values[i])
-			} else if value.Valid {
-				_m.TopOrigin = value.String
 			}
 		case passkey.FieldAttestationFmt:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -258,12 +242,6 @@ func (_m *Passkey) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("origin=")
 	builder.WriteString(_m.Origin)
-	builder.WriteString(", ")
-	builder.WriteString("cross_origin=")
-	builder.WriteString(fmt.Sprintf("%v", _m.CrossOrigin))
-	builder.WriteString(", ")
-	builder.WriteString("top_origin=")
-	builder.WriteString(_m.TopOrigin)
 	builder.WriteString(", ")
 	builder.WriteString("attestation_fmt=")
 	builder.WriteString(fmt.Sprintf("%v", _m.AttestationFmt))

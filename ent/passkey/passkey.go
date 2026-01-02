@@ -23,10 +23,6 @@ const (
 	FieldDeletedAt = "deleted_at"
 	// FieldOrigin holds the string denoting the origin field in the database.
 	FieldOrigin = "origin"
-	// FieldCrossOrigin holds the string denoting the cross_origin field in the database.
-	FieldCrossOrigin = "cross_origin"
-	// FieldTopOrigin holds the string denoting the top_origin field in the database.
-	FieldTopOrigin = "top_origin"
 	// FieldAttestationFmt holds the string denoting the attestation_fmt field in the database.
 	FieldAttestationFmt = "attestation_fmt"
 	// FieldBackupEligibilityBit holds the string denoting the backup_eligibility_bit field in the database.
@@ -65,8 +61,6 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldDeletedAt,
 	FieldOrigin,
-	FieldCrossOrigin,
-	FieldTopOrigin,
 	FieldAttestationFmt,
 	FieldBackupEligibilityBit,
 	FieldBackupStateBit,
@@ -97,8 +91,6 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// OriginValidator is a validator for the "origin" field. It is called by the builders before save.
 	OriginValidator func(string) error
-	// TopOriginValidator is a validator for the "top_origin" field. It is called by the builders before save.
-	TopOriginValidator func(string) error
 	// AaguidValidator is a validator for the "aaguid" field. It is called by the builders before save.
 	AaguidValidator func([]byte) error
 	// CredentialIDValidator is a validator for the "credential_id" field. It is called by the builders before save.
@@ -157,16 +149,6 @@ func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByOrigin orders the results by the origin field.
 func ByOrigin(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldOrigin, opts...).ToFunc()
-}
-
-// ByCrossOrigin orders the results by the cross_origin field.
-func ByCrossOrigin(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCrossOrigin, opts...).ToFunc()
-}
-
-// ByTopOrigin orders the results by the top_origin field.
-func ByTopOrigin(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTopOrigin, opts...).ToFunc()
 }
 
 // ByAttestationFmt orders the results by the attestation_fmt field.

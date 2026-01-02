@@ -46,12 +46,8 @@ func init() {
 			return nil
 		}
 	}()
-	// passkeyDescTopOrigin is the schema descriptor for top_origin field.
-	passkeyDescTopOrigin := passkeyFields[3].Descriptor()
-	// passkey.TopOriginValidator is a validator for the "top_origin" field. It is called by the builders before save.
-	passkey.TopOriginValidator = passkeyDescTopOrigin.Validators[0].(func(string) error)
 	// passkeyDescAaguid is the schema descriptor for aaguid field.
-	passkeyDescAaguid := passkeyFields[8].Descriptor()
+	passkeyDescAaguid := passkeyFields[6].Descriptor()
 	// passkey.AaguidValidator is a validator for the "aaguid" field. It is called by the builders before save.
 	passkey.AaguidValidator = func() func([]byte) error {
 		validators := passkeyDescAaguid.Validators
@@ -69,7 +65,7 @@ func init() {
 		}
 	}()
 	// passkeyDescCredentialID is the schema descriptor for credential_id field.
-	passkeyDescCredentialID := passkeyFields[9].Descriptor()
+	passkeyDescCredentialID := passkeyFields[7].Descriptor()
 	// passkey.CredentialIDValidator is a validator for the "credential_id" field. It is called by the builders before save.
 	passkey.CredentialIDValidator = func() func([]byte) error {
 		validators := passkeyDescCredentialID.Validators
@@ -87,7 +83,7 @@ func init() {
 		}
 	}()
 	// passkeyDescPublicKey is the schema descriptor for public_key field.
-	passkeyDescPublicKey := passkeyFields[10].Descriptor()
+	passkeyDescPublicKey := passkeyFields[8].Descriptor()
 	// passkey.PublicKeyValidator is a validator for the "public_key" field. It is called by the builders before save.
 	passkey.PublicKeyValidator = func() func([]byte) error {
 		validators := passkeyDescPublicKey.Validators

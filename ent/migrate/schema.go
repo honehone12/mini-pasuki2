@@ -15,8 +15,6 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "origin", Type: field.TypeString, Size: 256},
-		{Name: "cross_origin", Type: field.TypeBool},
-		{Name: "top_origin", Type: field.TypeString, Nullable: true, Size: 256},
 		{Name: "attestation_fmt", Type: field.TypeEnum, Enums: []string{"none", "packed", "tpm"}},
 		{Name: "backup_eligibility_bit", Type: field.TypeBool},
 		{Name: "backup_state_bit", Type: field.TypeBool},
@@ -35,7 +33,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "passkeys_users_passkeys",
-				Columns:    []*schema.Column{PasskeysColumns[15]},
+				Columns:    []*schema.Column{PasskeysColumns[13]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -44,7 +42,7 @@ var (
 			{
 				Name:    "passkey_credential_id",
 				Unique:  true,
-				Columns: []*schema.Column{PasskeysColumns[12]},
+				Columns: []*schema.Column{PasskeysColumns[10]},
 			},
 		},
 	}

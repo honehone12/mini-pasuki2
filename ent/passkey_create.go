@@ -70,26 +70,6 @@ func (_c *PasskeyCreate) SetOrigin(v string) *PasskeyCreate {
 	return _c
 }
 
-// SetCrossOrigin sets the "cross_origin" field.
-func (_c *PasskeyCreate) SetCrossOrigin(v bool) *PasskeyCreate {
-	_c.mutation.SetCrossOrigin(v)
-	return _c
-}
-
-// SetTopOrigin sets the "top_origin" field.
-func (_c *PasskeyCreate) SetTopOrigin(v string) *PasskeyCreate {
-	_c.mutation.SetTopOrigin(v)
-	return _c
-}
-
-// SetNillableTopOrigin sets the "top_origin" field if the given value is not nil.
-func (_c *PasskeyCreate) SetNillableTopOrigin(v *string) *PasskeyCreate {
-	if v != nil {
-		_c.SetTopOrigin(*v)
-	}
-	return _c
-}
-
 // SetAttestationFmt sets the "attestation_fmt" field.
 func (_c *PasskeyCreate) SetAttestationFmt(v passkey.AttestationFmt) *PasskeyCreate {
 	_c.mutation.SetAttestationFmt(v)
@@ -216,14 +196,6 @@ func (_c *PasskeyCreate) check() error {
 			return &ValidationError{Name: "origin", err: fmt.Errorf(`ent: validator failed for field "Passkey.origin": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.CrossOrigin(); !ok {
-		return &ValidationError{Name: "cross_origin", err: errors.New(`ent: missing required field "Passkey.cross_origin"`)}
-	}
-	if v, ok := _c.mutation.TopOrigin(); ok {
-		if err := passkey.TopOriginValidator(v); err != nil {
-			return &ValidationError{Name: "top_origin", err: fmt.Errorf(`ent: validator failed for field "Passkey.top_origin": %w`, err)}
-		}
-	}
 	if _, ok := _c.mutation.AttestationFmt(); !ok {
 		return &ValidationError{Name: "attestation_fmt", err: errors.New(`ent: missing required field "Passkey.attestation_fmt"`)}
 	}
@@ -324,14 +296,6 @@ func (_c *PasskeyCreate) createSpec() (*Passkey, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Origin(); ok {
 		_spec.SetField(passkey.FieldOrigin, field.TypeString, value)
 		_node.Origin = value
-	}
-	if value, ok := _c.mutation.CrossOrigin(); ok {
-		_spec.SetField(passkey.FieldCrossOrigin, field.TypeBool, value)
-		_node.CrossOrigin = value
-	}
-	if value, ok := _c.mutation.TopOrigin(); ok {
-		_spec.SetField(passkey.FieldTopOrigin, field.TypeString, value)
-		_node.TopOrigin = value
 	}
 	if value, ok := _c.mutation.AttestationFmt(); ok {
 		_spec.SetField(passkey.FieldAttestationFmt, field.TypeEnum, value)

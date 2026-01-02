@@ -76,16 +76,6 @@ func Origin(v string) predicate.Passkey {
 	return predicate.Passkey(sql.FieldEQ(FieldOrigin, v))
 }
 
-// CrossOrigin applies equality check predicate on the "cross_origin" field. It's identical to CrossOriginEQ.
-func CrossOrigin(v bool) predicate.Passkey {
-	return predicate.Passkey(sql.FieldEQ(FieldCrossOrigin, v))
-}
-
-// TopOrigin applies equality check predicate on the "top_origin" field. It's identical to TopOriginEQ.
-func TopOrigin(v string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldEQ(FieldTopOrigin, v))
-}
-
 // BackupEligibilityBit applies equality check predicate on the "backup_eligibility_bit" field. It's identical to BackupEligibilityBitEQ.
 func BackupEligibilityBit(v bool) predicate.Passkey {
 	return predicate.Passkey(sql.FieldEQ(FieldBackupEligibilityBit, v))
@@ -319,91 +309,6 @@ func OriginEqualFold(v string) predicate.Passkey {
 // OriginContainsFold applies the ContainsFold predicate on the "origin" field.
 func OriginContainsFold(v string) predicate.Passkey {
 	return predicate.Passkey(sql.FieldContainsFold(FieldOrigin, v))
-}
-
-// CrossOriginEQ applies the EQ predicate on the "cross_origin" field.
-func CrossOriginEQ(v bool) predicate.Passkey {
-	return predicate.Passkey(sql.FieldEQ(FieldCrossOrigin, v))
-}
-
-// CrossOriginNEQ applies the NEQ predicate on the "cross_origin" field.
-func CrossOriginNEQ(v bool) predicate.Passkey {
-	return predicate.Passkey(sql.FieldNEQ(FieldCrossOrigin, v))
-}
-
-// TopOriginEQ applies the EQ predicate on the "top_origin" field.
-func TopOriginEQ(v string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldEQ(FieldTopOrigin, v))
-}
-
-// TopOriginNEQ applies the NEQ predicate on the "top_origin" field.
-func TopOriginNEQ(v string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldNEQ(FieldTopOrigin, v))
-}
-
-// TopOriginIn applies the In predicate on the "top_origin" field.
-func TopOriginIn(vs ...string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldIn(FieldTopOrigin, vs...))
-}
-
-// TopOriginNotIn applies the NotIn predicate on the "top_origin" field.
-func TopOriginNotIn(vs ...string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldNotIn(FieldTopOrigin, vs...))
-}
-
-// TopOriginGT applies the GT predicate on the "top_origin" field.
-func TopOriginGT(v string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldGT(FieldTopOrigin, v))
-}
-
-// TopOriginGTE applies the GTE predicate on the "top_origin" field.
-func TopOriginGTE(v string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldGTE(FieldTopOrigin, v))
-}
-
-// TopOriginLT applies the LT predicate on the "top_origin" field.
-func TopOriginLT(v string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldLT(FieldTopOrigin, v))
-}
-
-// TopOriginLTE applies the LTE predicate on the "top_origin" field.
-func TopOriginLTE(v string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldLTE(FieldTopOrigin, v))
-}
-
-// TopOriginContains applies the Contains predicate on the "top_origin" field.
-func TopOriginContains(v string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldContains(FieldTopOrigin, v))
-}
-
-// TopOriginHasPrefix applies the HasPrefix predicate on the "top_origin" field.
-func TopOriginHasPrefix(v string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldHasPrefix(FieldTopOrigin, v))
-}
-
-// TopOriginHasSuffix applies the HasSuffix predicate on the "top_origin" field.
-func TopOriginHasSuffix(v string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldHasSuffix(FieldTopOrigin, v))
-}
-
-// TopOriginIsNil applies the IsNil predicate on the "top_origin" field.
-func TopOriginIsNil() predicate.Passkey {
-	return predicate.Passkey(sql.FieldIsNull(FieldTopOrigin))
-}
-
-// TopOriginNotNil applies the NotNil predicate on the "top_origin" field.
-func TopOriginNotNil() predicate.Passkey {
-	return predicate.Passkey(sql.FieldNotNull(FieldTopOrigin))
-}
-
-// TopOriginEqualFold applies the EqualFold predicate on the "top_origin" field.
-func TopOriginEqualFold(v string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldEqualFold(FieldTopOrigin, v))
-}
-
-// TopOriginContainsFold applies the ContainsFold predicate on the "top_origin" field.
-func TopOriginContainsFold(v string) predicate.Passkey {
-	return predicate.Passkey(sql.FieldContainsFold(FieldTopOrigin, v))
 }
 
 // AttestationFmtEQ applies the EQ predicate on the "attestation_fmt" field.

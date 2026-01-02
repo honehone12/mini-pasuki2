@@ -58,7 +58,11 @@ type RegisterFinishResult struct {
 	E
 }
 
-type VerifyFinishResult = E
+type VerifyFinishResult struct {
+	ClientData *ParsedClientData
+	AuthData   *ParsedAuthAssertionData
+	E
+}
 
 func NewPasuki2(
 	ent *ent.PasskeyClient,
@@ -264,7 +268,7 @@ func (p2 *Pasuki2) VerifyFinish(
 		r.ValidationErr = err
 		return r
 	}
-	_, err = p2.verifyClientData(rawclientD, encChal, CLIENT_DATA_TYPE_GET)
+	clientD, err := p2.verifyClientData(rawclientD, encChal, CLIENT_DATA_TYPE_GET)
 	if err != nil {
 		r.ValidationErr = err
 		return r
@@ -275,7 +279,7 @@ func (p2 *Pasuki2) VerifyFinish(
 		r.ValidationErr = err
 		return r
 	}
-	_, _, err = p2.verifyAuthenticatorData(rawauthD, true)
+	authD, _, err := p2.verifyAuthenticatorData(rawauthD, true)
 	if err != nil {
 		r.ValidationErr = err
 		return r
@@ -303,6 +307,8 @@ func (p2 *Pasuki2) VerifyFinish(
 		return r
 	}
 
+	r.ClientData = clientD
+	r.AuthData = authD
 	return r
 }
 

@@ -40,8 +40,6 @@ type PasskeyMutation struct {
 	updated_at             *time.Time
 	deleted_at             *time.Time
 	origin                 *string
-	cross_origin           *bool
-	top_origin             *string
 	attestation_fmt        *passkey.AttestationFmt
 	backup_eligibility_bit *bool
 	backup_state_bit       *bool
@@ -318,91 +316,6 @@ func (m *PasskeyMutation) OldOrigin(ctx context.Context) (v string, err error) {
 // ResetOrigin resets all changes to the "origin" field.
 func (m *PasskeyMutation) ResetOrigin() {
 	m.origin = nil
-}
-
-// SetCrossOrigin sets the "cross_origin" field.
-func (m *PasskeyMutation) SetCrossOrigin(b bool) {
-	m.cross_origin = &b
-}
-
-// CrossOrigin returns the value of the "cross_origin" field in the mutation.
-func (m *PasskeyMutation) CrossOrigin() (r bool, exists bool) {
-	v := m.cross_origin
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCrossOrigin returns the old "cross_origin" field's value of the Passkey entity.
-// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PasskeyMutation) OldCrossOrigin(ctx context.Context) (v bool, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCrossOrigin is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCrossOrigin requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCrossOrigin: %w", err)
-	}
-	return oldValue.CrossOrigin, nil
-}
-
-// ResetCrossOrigin resets all changes to the "cross_origin" field.
-func (m *PasskeyMutation) ResetCrossOrigin() {
-	m.cross_origin = nil
-}
-
-// SetTopOrigin sets the "top_origin" field.
-func (m *PasskeyMutation) SetTopOrigin(s string) {
-	m.top_origin = &s
-}
-
-// TopOrigin returns the value of the "top_origin" field in the mutation.
-func (m *PasskeyMutation) TopOrigin() (r string, exists bool) {
-	v := m.top_origin
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldTopOrigin returns the old "top_origin" field's value of the Passkey entity.
-// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PasskeyMutation) OldTopOrigin(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTopOrigin is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTopOrigin requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTopOrigin: %w", err)
-	}
-	return oldValue.TopOrigin, nil
-}
-
-// ClearTopOrigin clears the value of the "top_origin" field.
-func (m *PasskeyMutation) ClearTopOrigin() {
-	m.top_origin = nil
-	m.clearedFields[passkey.FieldTopOrigin] = struct{}{}
-}
-
-// TopOriginCleared returns if the "top_origin" field was cleared in this mutation.
-func (m *PasskeyMutation) TopOriginCleared() bool {
-	_, ok := m.clearedFields[passkey.FieldTopOrigin]
-	return ok
-}
-
-// ResetTopOrigin resets all changes to the "top_origin" field.
-func (m *PasskeyMutation) ResetTopOrigin() {
-	m.top_origin = nil
-	delete(m.clearedFields, passkey.FieldTopOrigin)
 }
 
 // SetAttestationFmt sets the "attestation_fmt" field.
@@ -810,7 +723,7 @@ func (m *PasskeyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PasskeyMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 13)
 	if m.created_at != nil {
 		fields = append(fields, passkey.FieldCreatedAt)
 	}
@@ -822,12 +735,6 @@ func (m *PasskeyMutation) Fields() []string {
 	}
 	if m.origin != nil {
 		fields = append(fields, passkey.FieldOrigin)
-	}
-	if m.cross_origin != nil {
-		fields = append(fields, passkey.FieldCrossOrigin)
-	}
-	if m.top_origin != nil {
-		fields = append(fields, passkey.FieldTopOrigin)
 	}
 	if m.attestation_fmt != nil {
 		fields = append(fields, passkey.FieldAttestationFmt)
@@ -872,10 +779,6 @@ func (m *PasskeyMutation) Field(name string) (ent.Value, bool) {
 		return m.DeletedAt()
 	case passkey.FieldOrigin:
 		return m.Origin()
-	case passkey.FieldCrossOrigin:
-		return m.CrossOrigin()
-	case passkey.FieldTopOrigin:
-		return m.TopOrigin()
 	case passkey.FieldAttestationFmt:
 		return m.AttestationFmt()
 	case passkey.FieldBackupEligibilityBit:
@@ -911,10 +814,6 @@ func (m *PasskeyMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldDeletedAt(ctx)
 	case passkey.FieldOrigin:
 		return m.OldOrigin(ctx)
-	case passkey.FieldCrossOrigin:
-		return m.OldCrossOrigin(ctx)
-	case passkey.FieldTopOrigin:
-		return m.OldTopOrigin(ctx)
 	case passkey.FieldAttestationFmt:
 		return m.OldAttestationFmt(ctx)
 	case passkey.FieldBackupEligibilityBit:
@@ -969,20 +868,6 @@ func (m *PasskeyMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetOrigin(v)
-		return nil
-	case passkey.FieldCrossOrigin:
-		v, ok := value.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCrossOrigin(v)
-		return nil
-	case passkey.FieldTopOrigin:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetTopOrigin(v)
 		return nil
 	case passkey.FieldAttestationFmt:
 		v, ok := value.(passkey.AttestationFmt)
@@ -1095,9 +980,6 @@ func (m *PasskeyMutation) ClearedFields() []string {
 	if m.FieldCleared(passkey.FieldDeletedAt) {
 		fields = append(fields, passkey.FieldDeletedAt)
 	}
-	if m.FieldCleared(passkey.FieldTopOrigin) {
-		fields = append(fields, passkey.FieldTopOrigin)
-	}
 	return fields
 }
 
@@ -1114,9 +996,6 @@ func (m *PasskeyMutation) ClearField(name string) error {
 	switch name {
 	case passkey.FieldDeletedAt:
 		m.ClearDeletedAt()
-		return nil
-	case passkey.FieldTopOrigin:
-		m.ClearTopOrigin()
 		return nil
 	}
 	return fmt.Errorf("unknown Passkey nullable field %s", name)
@@ -1137,12 +1016,6 @@ func (m *PasskeyMutation) ResetField(name string) error {
 		return nil
 	case passkey.FieldOrigin:
 		m.ResetOrigin()
-		return nil
-	case passkey.FieldCrossOrigin:
-		m.ResetCrossOrigin()
-		return nil
-	case passkey.FieldTopOrigin:
-		m.ResetTopOrigin()
 		return nil
 	case passkey.FieldAttestationFmt:
 		m.ResetAttestationFmt()

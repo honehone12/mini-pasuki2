@@ -26,12 +26,6 @@ func (Passkey) Fields() []ent.Field {
 			NotEmpty().
 			MaxLen(256).
 			Immutable(),
-		field.Bool("cross_origin").
-			Immutable(),
-		field.String("top_origin").
-			Optional().
-			MaxLen(256).
-			Immutable(),
 		field.Enum("attestation_fmt").
 			Values("none", "packed", "tpm" /* etc */).
 			Immutable(),

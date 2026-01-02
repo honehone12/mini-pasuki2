@@ -203,8 +203,6 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 	err = tx.Passkey.Create().
 		SetID(passId).
 		SetOrigin(r.ClientData.Origin).
-		SetCrossOrigin(r.ClientData.CrossOrigin).
-		SetTopOrigin(r.ClientData.TopOrigin).
 		SetAttestationFmt(passkey.AttestationFmt(r.AttestationObject.Fmt)).
 		SetBackupEligibilityBit(r.AttestationObject.BeBit).
 		SetBackupStateBit(r.AttestationObject.BsBit).
@@ -263,6 +261,9 @@ func (a *App) VerifyFinish(ctx echo.Context) error {
 		ctx.Logger().Warn(r.ValidationErr)
 		return echo.ErrBadRequest
 	}
+
+	ctx.Logger().Infof("%#v", r.ClientData)
+	ctx.Logger().Infof("%#v", r.AuthData)
 
 	return ctx.NoContent(http.StatusOK)
 }
