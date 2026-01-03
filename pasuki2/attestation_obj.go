@@ -80,9 +80,9 @@ func verifyAuthenticatorData(
 	}
 	p += 1
 
-	beBit := flags&FLAG_BACKUP_ELIGIBILITY == 1
-	bsBit := flags&FLAG_BACKUP_STATE == 1
-	extBit := flags&FLAG_EXTENSION_DATA == 1
+	beBit := flags&FLAG_BACKUP_ELIGIBILITY == FLAG_BACKUP_ELIGIBILITY
+	bsBit := flags&FLAG_BACKUP_STATE == FLAG_BACKUP_STATE
+	extBit := flags&FLAG_EXTENSION_DATA == FLAG_EXTENSION_DATA
 
 	if !fromGet && (flags&FLAG_ATTESTED_CREDENTIAL_DATA == 0) {
 		return nil, p, errors.New("unexpected attested credential data bit")
@@ -102,7 +102,7 @@ func verifyAuthenticatorData(
 			return nil, p, errors.New("auth data is not enough for extension data")
 		}
 
-		ext, exp, err := parseExtension(p, data)
+		ext, exp, err := parseExtension(p, data[p:])
 		if err != nil {
 			return nil, p, err
 		}
@@ -111,7 +111,7 @@ func verifyAuthenticatorData(
 		p = exp
 	}
 
-	if l != p {
+	if fromGet && l != p {
 		return nil, p, errors.New("l != p, unexpected data structure")
 	}
 
@@ -127,7 +127,7 @@ func verifyAuthenticatorData(
 
 func parseExtension(p int, data []byte) (map[string]any, int, error) {
 	var rawExt cbor.RawMessage
-	err := cbor.NewDecoder(bytes.NewReader(data[:p])).
+	err := cbor.NewDecoder(bytes.NewReader(data)).
 		Decode(&rawExt)
 	if err != nil {
 		return nil, p, err
@@ -165,20 +165,24 @@ func verifyAttestationObject(
 		return nil, err
 	}
 
-	aaguid := data[p : p+AAGUID_LEN]
+	aaguid := att.AuthData[p : p+AAGUID_LEN]
 	p += AAGUID_LEN
 
-	credIdLen := int(binary.BigEndian.Uint16(data[p : p+CREDENTIAL_ID_LENGTH_LEN]))
+	credIdLen := int(binary.BigEndian.Uint16(att.AuthData[p : p+CREDENTIAL_ID_LENGTH_LEN]))
 	p += CREDENTIAL_ID_LENGTH_LEN
 	if l <= p+credIdLen {
 		return nil, errors.New("auth data is not enough for credential")
 	}
 
-	credId := data[p : p+credIdLen]
+	credId := att.AuthData[p : p+credIdLen]
 	p += credIdLen
 
+	if l == p {
+		return nil, errors.New("auth data is not enough for publicKey")
+	}
+
 	var rawPk cbor.RawMessage
-	err = cbor.NewDecoder(bytes.NewReader(data[p:])).Decode(&rawPk)
+	err = cbor.NewDecoder(bytes.NewReader(att.AuthData[p:])).Decode(&rawPk)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +198,7 @@ func verifyAttestationObject(
 			return nil, errors.New("auth data is not enough for extension data")
 		}
 
-		extensions, exp, err := parseExtension(p, data)
+		extensions, exp, err := parseExtension(p, att.AuthData[p:])
 		if err != nil {
 			return nil, err
 		}
