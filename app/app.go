@@ -236,7 +236,6 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 		SetAaguid(r.AttestationObject.Aaguid).
 		SetCredentialID(r.AttestationObject.CredentialId).
 		SetPublicKey(r.AttestationObject.CredentialPublicKey).
-		SetExtensionBit(r.AttestationObject.ExtBit).
 		SetUserID(userId).
 		Exec(c)
 	if err != nil {
@@ -298,7 +297,10 @@ func (a *App) VerifyFinish(ctx echo.Context) error {
 	c := ctx.Request().Context()
 
 	passK, err := a.ent.Passkey.Query().
-		Select(passkey.FieldPublicKey).
+		Select(
+			passkey.FieldSignCount,
+			passkey.FieldPublicKey,
+		).
 		Where(
 			passkey.CredentialID(credId),
 			passkey.DeletedAtIsNil(),
@@ -322,14 +324,15 @@ func (a *App) VerifyFinish(ctx echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	r := pasuki2.VerifyFinish(
-		&form,
-		[]byte(__SESSION_PLACEHOLDER),
-		passK.PublicKey,
-		a.relyingPartyIdHash,
-		a.origin,
-		encChal,
-	)
+	p := pasuki2.VerifyFinishParams{
+		Session:            []byte(__SESSION_PLACEHOLDER),
+		PublicKey:          passK.PublicKey,
+		RelyingPartyIdHash: a.relyingPartyIdHash,
+		Origin:             a.origin,
+		Challenge:          encChal,
+		CurrentCount:       passK.SignCount,
+	}
+	r := pasuki2.VerifyFinish(&form, &p)
 	if r.SystemErr != nil {
 		ctx.Logger().Error(r.SystemErr)
 		return echo.ErrInternalServerError
@@ -337,6 +340,16 @@ func (a *App) VerifyFinish(ctx echo.Context) error {
 	if r.ValidationErr != nil {
 		ctx.Logger().Warn(r.ValidationErr)
 		return echo.ErrBadRequest
+	}
+
+	err = a.ent.Passkey.UpdateOneID(passK.ID).
+		SetSignCount(r.AuthData.SignCount).
+		SetBackupEligibilityBit(r.AuthData.BeBit).
+		SetBackupStateBit(r.AuthData.BsBit).
+		Exec(c)
+	if err != nil {
+		ctx.Logger().Error(err)
+		return echo.ErrInternalServerError
 	}
 
 	return ctx.NoContent(http.StatusOK)

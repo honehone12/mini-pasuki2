@@ -106,11 +106,6 @@ func PublicKey(v []byte) predicate.Passkey {
 	return predicate.Passkey(sql.FieldEQ(FieldPublicKey, v))
 }
 
-// ExtensionBit applies equality check predicate on the "extension_bit" field. It's identical to ExtensionBitEQ.
-func ExtensionBit(v bool) predicate.Passkey {
-	return predicate.Passkey(sql.FieldEQ(FieldExtensionBit, v))
-}
-
 // UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
 func UserID(v binid.BinId) predicate.Passkey {
 	return predicate.Passkey(sql.FieldEQ(FieldUserID, v))
@@ -509,16 +504,6 @@ func PublicKeyLT(v []byte) predicate.Passkey {
 // PublicKeyLTE applies the LTE predicate on the "public_key" field.
 func PublicKeyLTE(v []byte) predicate.Passkey {
 	return predicate.Passkey(sql.FieldLTE(FieldPublicKey, v))
-}
-
-// ExtensionBitEQ applies the EQ predicate on the "extension_bit" field.
-func ExtensionBitEQ(v bool) predicate.Passkey {
-	return predicate.Passkey(sql.FieldEQ(FieldExtensionBit, v))
-}
-
-// ExtensionBitNEQ applies the NEQ predicate on the "extension_bit" field.
-func ExtensionBitNEQ(v bool) predicate.Passkey {
-	return predicate.Passkey(sql.FieldNEQ(FieldExtensionBit, v))
 }
 
 // UserIDEQ applies the EQ predicate on the "user_id" field.

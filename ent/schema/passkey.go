@@ -49,7 +49,6 @@ func (Passkey) Fields() []ent.Field {
 			Immutable().
 			Unique().
 			SchemaType(map[string]string{dialect.MySQL: "varbinary(512)"}),
-		field.Bool("extension_bit"),
 		field.UUID("user_id", binid.BinId{}).
 			Immutable().
 			SchemaType(map[string]string{dialect.MySQL: "binary(16)"}),

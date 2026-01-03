@@ -112,12 +112,6 @@ func (_c *PasskeyCreate) SetPublicKey(v []byte) *PasskeyCreate {
 	return _c
 }
 
-// SetExtensionBit sets the "extension_bit" field.
-func (_c *PasskeyCreate) SetExtensionBit(v bool) *PasskeyCreate {
-	_c.mutation.SetExtensionBit(v)
-	return _c
-}
-
 // SetUserID sets the "user_id" field.
 func (_c *PasskeyCreate) SetUserID(v binid.BinId) *PasskeyCreate {
 	_c.mutation.SetUserID(v)
@@ -237,9 +231,6 @@ func (_c *PasskeyCreate) check() error {
 			return &ValidationError{Name: "public_key", err: fmt.Errorf(`ent: validator failed for field "Passkey.public_key": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.ExtensionBit(); !ok {
-		return &ValidationError{Name: "extension_bit", err: errors.New(`ent: missing required field "Passkey.extension_bit"`)}
-	}
 	if _, ok := _c.mutation.UserID(); !ok {
 		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Passkey.user_id"`)}
 	}
@@ -324,10 +315,6 @@ func (_c *PasskeyCreate) createSpec() (*Passkey, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.PublicKey(); ok {
 		_spec.SetField(passkey.FieldPublicKey, field.TypeBytes, value)
 		_node.PublicKey = value
-	}
-	if value, ok := _c.mutation.ExtensionBit(); ok {
-		_spec.SetField(passkey.FieldExtensionBit, field.TypeBool, value)
-		_node.ExtensionBit = value
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

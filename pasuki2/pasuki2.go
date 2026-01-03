@@ -30,6 +30,15 @@ type RegisterFinishResult struct {
 	Error             error
 }
 
+type VerifyFinishParams struct {
+	Session            []byte
+	PublicKey          []byte
+	RelyingPartyIdHash []byte
+	Origin             string
+	Challenge          string
+	CurrentCount       uint32
+}
+
 type VerifyFinishResult struct {
 	ClientData    *ParsedClientData
 	AuthData      *ParsedAuthAssertionData
@@ -131,10 +140,9 @@ func VerifyStart(session []byte, challenge string) *VerifyOptions {
 
 func VerifyFinish(
 	f *form.VerifyFinishRequest,
-	session, publicKey, relyingPartyIdHash []byte,
-	origin, challenge string,
-) VerifyFinishResult {
-	r := VerifyFinishResult{}
+	p *VerifyFinishParams,
+) *VerifyFinishResult {
+	r := &VerifyFinishResult{}
 
 	rawclientD, err := base64.RawURLEncoding.DecodeString(f.ClientDataJson)
 	if err != nil {
@@ -143,8 +151,8 @@ func VerifyFinish(
 	}
 	clientD, err := verifyClientData(
 		rawclientD,
-		origin,
-		challenge,
+		p.Origin,
+		p.Challenge,
 		CLIENT_DATA_TYPE_GET,
 	)
 	if err != nil {
@@ -157,7 +165,12 @@ func VerifyFinish(
 		r.ValidationErr = err
 		return r
 	}
-	authD, _, err := verifyAuthenticatorData(rawauthD, relyingPartyIdHash, true)
+	authD, _, err := verifyAuthenticatorData(
+		rawauthD,
+		p.RelyingPartyIdHash,
+		true,
+		p.CurrentCount,
+	)
 	if err != nil {
 		r.ValidationErr = err
 		return r
@@ -175,7 +188,7 @@ func VerifyFinish(
 		return r
 	}
 
-	ok, err := verifySignature(publicKey, src, rawSig)
+	ok, err := verifySignature(p.PublicKey, src, rawSig)
 	if err != nil {
 		r.SystemErr = err
 		return r

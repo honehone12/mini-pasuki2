@@ -58,6 +58,7 @@ type ParsedAuthAttestationData struct {
 func verifyAuthenticatorData(
 	data, relyingPartyIdHash []byte,
 	fromGet bool,
+	currentCount uint32,
 ) (*ParsedAuthAssertionData, int, error) {
 	l := len(data)
 	if l < __AUTHDATA_MIN_LEN {
@@ -88,6 +89,11 @@ func verifyAuthenticatorData(
 	}
 
 	signCount := binary.BigEndian.Uint32(data[p : p+SIGN_COUNT_LEN])
+	if currentCount != 0 && signCount != 0 {
+		if signCount <= currentCount {
+			return nil, p, errors.New("invalid sign count")
+		}
+	}
 	p += SIGN_COUNT_LEN
 
 	var extensions map[string]any
@@ -149,7 +155,12 @@ func verifyAttestationObject(
 		return nil, errors.New("invalid auth data attestation length")
 	}
 
-	asseD, p, err := verifyAuthenticatorData(att.AuthData, relyingPartyIdHash, false)
+	asseD, p, err := verifyAuthenticatorData(
+		att.AuthData,
+		relyingPartyIdHash,
+		false,
+		0,
+	)
 	if err != nil {
 		return nil, err
 	}

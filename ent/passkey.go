@@ -41,8 +41,6 @@ type Passkey struct {
 	CredentialID []byte `json:"credential_id,omitempty"`
 	// PublicKey holds the value of the "public_key" field.
 	PublicKey []byte `json:"public_key,omitempty"`
-	// ExtensionBit holds the value of the "extension_bit" field.
-	ExtensionBit bool `json:"extension_bit,omitempty"`
 	// UserID holds the value of the "user_id" field.
 	UserID binid.BinId `json:"user_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -80,7 +78,7 @@ func (*Passkey) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case passkey.FieldID, passkey.FieldUserID:
 			values[i] = new(binid.BinId)
-		case passkey.FieldBackupEligibilityBit, passkey.FieldBackupStateBit, passkey.FieldExtensionBit:
+		case passkey.FieldBackupEligibilityBit, passkey.FieldBackupStateBit:
 			values[i] = new(sql.NullBool)
 		case passkey.FieldSignCount:
 			values[i] = new(sql.NullInt64)
@@ -176,12 +174,6 @@ func (_m *Passkey) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				_m.PublicKey = *value
 			}
-		case passkey.FieldExtensionBit:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field extension_bit", values[i])
-			} else if value.Valid {
-				_m.ExtensionBit = value.Bool
-			}
 		case passkey.FieldUserID:
 			if value, ok := values[i].(*binid.BinId); !ok {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
@@ -263,9 +255,6 @@ func (_m *Passkey) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("public_key=")
 	builder.WriteString(fmt.Sprintf("%v", _m.PublicKey))
-	builder.WriteString(", ")
-	builder.WriteString("extension_bit=")
-	builder.WriteString(fmt.Sprintf("%v", _m.ExtensionBit))
 	builder.WriteString(", ")
 	builder.WriteString("user_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.UserID))

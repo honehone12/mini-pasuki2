@@ -103,20 +103,6 @@ func (_u *PasskeyUpdate) AddSignCount(v int32) *PasskeyUpdate {
 	return _u
 }
 
-// SetExtensionBit sets the "extension_bit" field.
-func (_u *PasskeyUpdate) SetExtensionBit(v bool) *PasskeyUpdate {
-	_u.mutation.SetExtensionBit(v)
-	return _u
-}
-
-// SetNillableExtensionBit sets the "extension_bit" field if the given value is not nil.
-func (_u *PasskeyUpdate) SetNillableExtensionBit(v *bool) *PasskeyUpdate {
-	if v != nil {
-		_u.SetExtensionBit(*v)
-	}
-	return _u
-}
-
 // Mutation returns the PasskeyMutation object of the builder.
 func (_u *PasskeyUpdate) Mutation() *PasskeyMutation {
 	return _u.mutation
@@ -198,9 +184,6 @@ func (_u *PasskeyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedSignCount(); ok {
 		_spec.AddField(passkey.FieldSignCount, field.TypeUint32, value)
-	}
-	if value, ok := _u.mutation.ExtensionBit(); ok {
-		_spec.SetField(passkey.FieldExtensionBit, field.TypeBool, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -294,20 +277,6 @@ func (_u *PasskeyUpdateOne) SetNillableSignCount(v *uint32) *PasskeyUpdateOne {
 // AddSignCount adds value to the "sign_count" field.
 func (_u *PasskeyUpdateOne) AddSignCount(v int32) *PasskeyUpdateOne {
 	_u.mutation.AddSignCount(v)
-	return _u
-}
-
-// SetExtensionBit sets the "extension_bit" field.
-func (_u *PasskeyUpdateOne) SetExtensionBit(v bool) *PasskeyUpdateOne {
-	_u.mutation.SetExtensionBit(v)
-	return _u
-}
-
-// SetNillableExtensionBit sets the "extension_bit" field if the given value is not nil.
-func (_u *PasskeyUpdateOne) SetNillableExtensionBit(v *bool) *PasskeyUpdateOne {
-	if v != nil {
-		_u.SetExtensionBit(*v)
-	}
 	return _u
 }
 
@@ -422,9 +391,6 @@ func (_u *PasskeyUpdateOne) sqlSave(ctx context.Context) (_node *Passkey, err er
 	}
 	if value, ok := _u.mutation.AddedSignCount(); ok {
 		_spec.AddField(passkey.FieldSignCount, field.TypeUint32, value)
-	}
-	if value, ok := _u.mutation.ExtensionBit(); ok {
-		_spec.SetField(passkey.FieldExtensionBit, field.TypeBool, value)
 	}
 	_node = &Passkey{config: _u.config}
 	_spec.Assign = _node.assignValues

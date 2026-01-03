@@ -22,7 +22,6 @@ var (
 		{Name: "aaguid", Type: field.TypeBytes, Size: 16, SchemaType: map[string]string{"mysql": "binary(16)"}},
 		{Name: "credential_id", Type: field.TypeBytes, Unique: true, Size: 64, SchemaType: map[string]string{"mysql": "varbinary(64)"}},
 		{Name: "public_key", Type: field.TypeBytes, Unique: true, Size: 512, SchemaType: map[string]string{"mysql": "varbinary(512)"}},
-		{Name: "extension_bit", Type: field.TypeBool},
 		{Name: "user_id", Type: field.TypeUUID, SchemaType: map[string]string{"mysql": "binary(16)"}},
 	}
 	// PasskeysTable holds the schema information for the "passkeys" table.
@@ -33,7 +32,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "passkeys_users_passkeys",
-				Columns:    []*schema.Column{PasskeysColumns[13]},
+				Columns:    []*schema.Column{PasskeysColumns[12]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

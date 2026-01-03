@@ -37,8 +37,6 @@ const (
 	FieldCredentialID = "credential_id"
 	// FieldPublicKey holds the string denoting the public_key field in the database.
 	FieldPublicKey = "public_key"
-	// FieldExtensionBit holds the string denoting the extension_bit field in the database.
-	FieldExtensionBit = "extension_bit"
 	// FieldUserID holds the string denoting the user_id field in the database.
 	FieldUserID = "user_id"
 	// EdgeUser holds the string denoting the user edge name in mutations.
@@ -68,7 +66,6 @@ var Columns = []string{
 	FieldAaguid,
 	FieldCredentialID,
 	FieldPublicKey,
-	FieldExtensionBit,
 	FieldUserID,
 }
 
@@ -169,11 +166,6 @@ func ByBackupStateBit(opts ...sql.OrderTermOption) OrderOption {
 // BySignCount orders the results by the sign_count field.
 func BySignCount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSignCount, opts...).ToFunc()
-}
-
-// ByExtensionBit orders the results by the extension_bit field.
-func ByExtensionBit(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldExtensionBit, opts...).ToFunc()
 }
 
 // ByUserID orders the results by the user_id field.

@@ -48,7 +48,6 @@ type PasskeyMutation struct {
 	aaguid                 *[]byte
 	credential_id          *[]byte
 	public_key             *[]byte
-	extension_bit          *bool
 	clearedFields          map[string]struct{}
 	user                   *binid.BinId
 	cleareduser            bool
@@ -590,42 +589,6 @@ func (m *PasskeyMutation) ResetPublicKey() {
 	m.public_key = nil
 }
 
-// SetExtensionBit sets the "extension_bit" field.
-func (m *PasskeyMutation) SetExtensionBit(b bool) {
-	m.extension_bit = &b
-}
-
-// ExtensionBit returns the value of the "extension_bit" field in the mutation.
-func (m *PasskeyMutation) ExtensionBit() (r bool, exists bool) {
-	v := m.extension_bit
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldExtensionBit returns the old "extension_bit" field's value of the Passkey entity.
-// If the Passkey object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PasskeyMutation) OldExtensionBit(ctx context.Context) (v bool, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldExtensionBit is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldExtensionBit requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldExtensionBit: %w", err)
-	}
-	return oldValue.ExtensionBit, nil
-}
-
-// ResetExtensionBit resets all changes to the "extension_bit" field.
-func (m *PasskeyMutation) ResetExtensionBit() {
-	m.extension_bit = nil
-}
-
 // SetUserID sets the "user_id" field.
 func (m *PasskeyMutation) SetUserID(bi binid.BinId) {
 	m.user = &bi
@@ -723,7 +686,7 @@ func (m *PasskeyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PasskeyMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 12)
 	if m.created_at != nil {
 		fields = append(fields, passkey.FieldCreatedAt)
 	}
@@ -756,9 +719,6 @@ func (m *PasskeyMutation) Fields() []string {
 	}
 	if m.public_key != nil {
 		fields = append(fields, passkey.FieldPublicKey)
-	}
-	if m.extension_bit != nil {
-		fields = append(fields, passkey.FieldExtensionBit)
 	}
 	if m.user != nil {
 		fields = append(fields, passkey.FieldUserID)
@@ -793,8 +753,6 @@ func (m *PasskeyMutation) Field(name string) (ent.Value, bool) {
 		return m.CredentialID()
 	case passkey.FieldPublicKey:
 		return m.PublicKey()
-	case passkey.FieldExtensionBit:
-		return m.ExtensionBit()
 	case passkey.FieldUserID:
 		return m.UserID()
 	}
@@ -828,8 +786,6 @@ func (m *PasskeyMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldCredentialID(ctx)
 	case passkey.FieldPublicKey:
 		return m.OldPublicKey(ctx)
-	case passkey.FieldExtensionBit:
-		return m.OldExtensionBit(ctx)
 	case passkey.FieldUserID:
 		return m.OldUserID(ctx)
 	}
@@ -917,13 +873,6 @@ func (m *PasskeyMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPublicKey(v)
-		return nil
-	case passkey.FieldExtensionBit:
-		v, ok := value.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetExtensionBit(v)
 		return nil
 	case passkey.FieldUserID:
 		v, ok := value.(binid.BinId)
@@ -1037,9 +986,6 @@ func (m *PasskeyMutation) ResetField(name string) error {
 		return nil
 	case passkey.FieldPublicKey:
 		m.ResetPublicKey()
-		return nil
-	case passkey.FieldExtensionBit:
-		m.ResetExtensionBit()
 		return nil
 	case passkey.FieldUserID:
 		m.ResetUserID()
