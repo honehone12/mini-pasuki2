@@ -1,7 +1,6 @@
 package pasuki2
 
 import (
-	"context"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/md5"
@@ -9,14 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"fmt"
-	"mini-pasuki2/challenge"
-	"mini-pasuki2/ent"
-	"mini-pasuki2/ent/passkey"
 	"mini-pasuki2/form"
-	"time"
-
-	"github.com/redis/go-redis/v9"
 )
 
 const PUBLIC_KEY_TYPE = "public-key"
@@ -32,90 +24,33 @@ const ATTESTATION_NONE = "none"
 
 const AUTHENTICATOR_REQUIRED = "required"
 
-const REDIS_REGISTRATION_CHALLENGE_KEY = "REGCHAL"
-const REDIS_VERIFY_CHALLENGE_KEY = "VERCHAL"
-
-type Pasuki2 struct {
-	passKeyClient *ent.PasskeyClient
-	redis         *redis.Client
-	origin        string
-	rpIdHash      []byte
+type RegisterFinishResult struct {
+	ClientData        *ParsedClientData
+	AttestationObject *ParsedAttestationObject
+	Error             error
 }
 
-type E struct {
+type VerifyFinishResult struct {
+	ClientData    *ParsedClientData
+	AuthData      *ParsedAuthAssertionData
 	ValidationErr error
 	SystemErr     error
 }
 
-type RegisterStartResult struct {
-	Options *RegistrationOptions
-	E
-}
-
-type RegisterFinishResult struct {
-	ClientData        *ParsedClientData
-	AttestationObject *ParsedAttestationObject
-	E
-}
-
-type VerifyFinishResult struct {
-	ClientData *ParsedClientData
-	AuthData   *ParsedAuthAssertionData
-	E
-}
-
-func NewPasuki2(
-	ent *ent.PasskeyClient,
-	redis *redis.Client,
-	origin string,
-	rpId string,
-) *Pasuki2 {
-	rpIdHash := sha256.Sum256([]byte(rpId))
-	return &Pasuki2{ent, redis, origin, rpIdHash[:]}
-}
-
-func (p2 *Pasuki2) RegisterStart(
-	ctx context.Context,
-	email string,
-	name string,
-) *RegisterStartResult {
-	r := &RegisterStartResult{}
-
-	chal, err := challenge.Gen()
-	if err != nil {
-		r.SystemErr = err
-		return r
-	}
-	encChal := base64.RawURLEncoding.EncodeToString(chal)
-
-	key := fmt.Sprintf("%s:%s", REDIS_REGISTRATION_CHALLENGE_KEY, email)
-	err = p2.redis.SetArgs(
-		ctx,
-		key,
-		encChal,
-		redis.SetArgs{
-			Mode: "NX",
-			TTL:  time.Millisecond * DEFAULT_TIME_OUT_MIL,
-		},
-	).Err()
-	if errors.Is(err, redis.Nil) {
-		r.ValidationErr = errors.New("challenge already exists")
-		return r
-	} else if err != nil {
-		r.SystemErr = err
-		return r
-	}
-
-	emailHash := md5.Sum([]byte(email))
+func RegisterStart(
+	f *form.RegisterStartRequest,
+	relyingParty, challenge string,
+) *RegistrationOptions {
+	emailHash := md5.Sum([]byte(f.Email))
 	encId := base64.RawURLEncoding.EncodeToString(emailHash[:])
 	op := &RegistrationOptions{
-		Challenge: encChal,
+		Challenge: challenge,
 		Rp: RelyingParty{
-			Name: "MiniPasuki2",
+			Name: relyingParty,
 		},
 		User: User{
-			Name:        email,
-			DisplayName: name,
+			Name:        f.Email,
+			DisplayName: f.Name,
 			Id:          encId,
 		},
 		PublicKeyCredentialParams: []PublicKeyCredentialParams{{
@@ -136,52 +71,45 @@ func (p2 *Pasuki2) RegisterStart(
 		Extensions:         nil,
 	}
 
-	r.Options = op
-	return r
+	return op
 }
 
-// this does not persist parsed data,
-// because it want transaction with user record
-func (p2 *Pasuki2) RegisterFinish(
-	ctx context.Context,
+func RegisterFinish(
 	f *form.RegisterFinishRequest,
+	relyingPartyIdHash []byte,
+	origin, challenge string,
 ) *RegisterFinishResult {
 	r := &RegisterFinishResult{}
 
-	key := fmt.Sprintf("%s:%s", REDIS_REGISTRATION_CHALLENGE_KEY, f.Email)
-	chal, err := p2.redis.GetDel(ctx, key).Result()
-	if errors.Is(err, redis.Nil) {
-		r.ValidationErr = err
-		return r
-	} else if err != nil {
-		r.SystemErr = err
-		return r
-	}
-
 	rawclientD, err := base64.RawURLEncoding.DecodeString(f.ClientDataJson)
 	if err != nil {
-		r.ValidationErr = err
+		r.Error = err
 		return r
 	}
-	clientD, err := p2.verifyClientData(rawclientD, chal, CLIENT_DATA_TYPE_CREATE)
+	clientD, err := verifyClientData(
+		rawclientD,
+		origin,
+		challenge,
+		CLIENT_DATA_TYPE_CREATE,
+	)
 	if err != nil {
-		r.ValidationErr = err
+		r.Error = err
 		return r
 	}
 
 	rawAtt, err := base64.RawURLEncoding.DecodeString(f.AttestationObject)
 	if err != nil {
-		r.ValidationErr = err
+		r.Error = err
 		return r
 	}
-	id, err := base64.RawURLEncoding.DecodeString(f.Id)
+	credId, err := base64.RawURLEncoding.DecodeString(f.Id)
 	if err != nil {
-		r.ValidationErr = err
+		r.Error = err
 		return r
 	}
-	attObj, err := p2.verifyAttestationObject(rawAtt, id)
+	attObj, err := verifyAttestationObject(rawAtt, relyingPartyIdHash, credId)
 	if err != nil {
-		r.ValidationErr = err
+		r.Error = err
 		return r
 	}
 
@@ -190,85 +118,35 @@ func (p2 *Pasuki2) RegisterFinish(
 	return r
 }
 
-func (p2 *Pasuki2) VerifyStart(
-	ctx context.Context,
-	session []byte,
-) (*VerifyOptions, error) {
-	chal, err := challenge.Gen()
-	if err != nil {
-		return nil, err
-	}
-
-	encChal := base64.RawURLEncoding.EncodeToString(chal)
-
-	key := fmt.Sprintf("%s:%x", REDIS_VERIFY_CHALLENGE_KEY, session)
-	err = p2.redis.SetArgs(
-		ctx,
-		key,
-		encChal,
-		redis.SetArgs{
-			Mode: "NX",
-			TTL:  time.Millisecond * DEFAULT_TIME_OUT_MIL,
-		},
-	).Err()
-	if err != nil {
-		return nil, err
-	}
-
+func VerifyStart(session []byte, challenge string) *VerifyOptions {
 	op := &VerifyOptions{
 		AllowCredentials: nil,
-		Challenge:        encChal,
+		Challenge:        challenge,
 		Timeout:          DEFAULT_TIME_OUT_MIL,
 		UserVerification: AUTHENTICATOR_REQUIRED,
 	}
 
-	return op, nil
+	return op
 }
 
-func (p2 *Pasuki2) VerifyFinish(
-	ctx context.Context,
+func VerifyFinish(
 	f *form.VerifyFinishRequest,
-	session []byte,
+	session, publicKey, relyingPartyIdHash []byte,
+	origin, challenge string,
 ) VerifyFinishResult {
 	r := VerifyFinishResult{}
-
-	id, err := base64.RawURLEncoding.DecodeString(f.Id)
-	if err != nil {
-		r.SystemErr = err
-		return r
-	}
-
-	passK, err := p2.passKeyClient.Query().
-		Select(passkey.FieldPublicKey).
-		Where(
-			passkey.CredentialID(id),
-			passkey.DeletedAtIsNil(),
-		).
-		Only(ctx)
-	if ent.IsNotFound(err) {
-		r.ValidationErr = err
-		return r
-	} else if err != nil {
-		r.SystemErr = err
-		return r
-	}
-
-	key := fmt.Sprintf("%s:%x", REDIS_VERIFY_CHALLENGE_KEY, session)
-	encChal, err := p2.redis.GetDel(ctx, key).Result()
-	if errors.Is(err, redis.Nil) {
-		r.ValidationErr = errors.New("challenge not found")
-		return r
-	} else if err != nil {
-		r.SystemErr = err
-		return r
-	}
 
 	rawclientD, err := base64.RawURLEncoding.DecodeString(f.ClientDataJson)
 	if err != nil {
 		r.ValidationErr = err
 		return r
 	}
-	clientD, err := p2.verifyClientData(rawclientD, encChal, CLIENT_DATA_TYPE_GET)
+	clientD, err := verifyClientData(
+		rawclientD,
+		origin,
+		challenge,
+		CLIENT_DATA_TYPE_GET,
+	)
 	if err != nil {
 		r.ValidationErr = err
 		return r
@@ -279,7 +157,7 @@ func (p2 *Pasuki2) VerifyFinish(
 		r.ValidationErr = err
 		return r
 	}
-	authD, _, err := p2.verifyAuthenticatorData(rawauthD, true)
+	authD, _, err := verifyAuthenticatorData(rawauthD, relyingPartyIdHash, true)
 	if err != nil {
 		r.ValidationErr = err
 		return r
@@ -297,7 +175,7 @@ func (p2 *Pasuki2) VerifyFinish(
 		return r
 	}
 
-	ok, err := verifySignature(passK.PublicKey, src, rawSig)
+	ok, err := verifySignature(publicKey, src, rawSig)
 	if err != nil {
 		r.SystemErr = err
 		return r

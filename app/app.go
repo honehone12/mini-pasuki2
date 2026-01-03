@@ -2,8 +2,12 @@ package app
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"mini-pasuki2/binid"
+	"mini-pasuki2/challenge"
 	"mini-pasuki2/ent"
 	"mini-pasuki2/ent/passkey"
 	"mini-pasuki2/ent/user"
@@ -11,6 +15,7 @@ import (
 	"mini-pasuki2/pasuki2"
 	"net/http"
 	"os"
+	"time"
 
 	"entgo.io/ent/dialect"
 
@@ -24,12 +29,20 @@ import (
 
 const ENT_MAX_CONN = 3
 
-const __SESSION_PLACEHOLDER = "use-cookie-session-value"
+const (
+	__REDIS_REGISTRATION_CHALLENGE_KEY = "REGCHAL"
+	__REDIS_VERIFY_CHALLENGE_KEY       = "VERCHAL"
+)
+const __SESSION_PLACEHOLDER = "USE_COOKIE_SESSION_VALUE"
 
 type App struct {
 	ent       *ent.Client
-	pasuki    *pasuki2.Pasuki2
+	redis     *redis.Client
 	validator *validator.Validate
+
+	origin             string
+	relyingParty       string
+	relyingPartyIdHash []byte
 }
 
 func NewApp() (*App, error) {
@@ -40,6 +53,10 @@ func NewApp() (*App, error) {
 	origin := os.Getenv("ORIGIN")
 	if len(origin) == 0 {
 		return nil, errors.New("could not find env for origin")
+	}
+	rp := os.Getenv("RP_NAME")
+	if len(rp) == 0 {
+		return nil, errors.New("could not find env for rp name")
 	}
 	rpId := os.Getenv("RP_ID")
 	if len(rpId) == 0 {
@@ -79,10 +96,17 @@ func NewApp() (*App, error) {
 		return nil, err
 	}
 
-	pasuki := pasuki2.NewPasuki2(ent.Passkey, redis, origin, rpId)
 	validator := validator.New()
+	rpIdHash := sha256.Sum256([]byte(rpId))
 
-	return &App{ent, pasuki, validator}, nil
+	return &App{
+		ent,
+		redis,
+		validator,
+		origin,
+		rp,
+		rpIdHash[:],
+	}, nil
 }
 
 func (a *App) Close() error {
@@ -109,28 +133,6 @@ func rollback(tx *ent.Tx, original error) error {
 	return original
 }
 
-func (a *App) getUser(ctx context.Context, email string) (*ent.User, error) {
-	u, err := a.ent.User.Query().
-		Select(
-			user.FieldID,
-			user.FieldLoginMethod,
-		).
-		Where(
-			user.Email(email),
-			user.DeletedAtIsNil(),
-		).
-		Only(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if u.LoginMethod != user.LoginMethodPasskey {
-		return nil, errors.New("login method is not passkey")
-	}
-
-	return u, nil
-}
-
 func (a *App) RegisterStart(ctx echo.Context) error {
 	form := form.RegisterStartRequest{}
 
@@ -139,17 +141,34 @@ func (a *App) RegisterStart(ctx echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	r := a.pasuki.RegisterStart(ctx.Request().Context(), form.Email, form.Name)
-	if r.ValidationErr != nil {
-		ctx.Logger().Warn(r.ValidationErr)
-		return echo.ErrBadRequest
+	chal, err := challenge.Gen()
+	if err != nil {
+		ctx.Logger().Error(err)
+		return echo.ErrInternalServerError
 	}
-	if r.SystemErr != nil {
-		ctx.Logger().Error(r.SystemErr)
+	encChal := base64.RawURLEncoding.EncodeToString(chal)
+
+	key := fmt.Sprintf("%s:%s", __REDIS_REGISTRATION_CHALLENGE_KEY, form.Email)
+	err = a.redis.SetArgs(
+		ctx.Request().Context(),
+		key,
+		encChal,
+		redis.SetArgs{
+			Mode: "NX",
+			TTL:  time.Millisecond * pasuki2.DEFAULT_TIME_OUT_MIL,
+		},
+	).Err()
+	if errors.Is(err, redis.Nil) {
+		ctx.Logger().Warn("challenge already exists")
+		return echo.ErrBadRequest
+	} else if err != nil {
+		ctx.Logger().Error(err)
 		return echo.ErrInternalServerError
 	}
 
-	return ctx.JSON(http.StatusOK, r.Options)
+	op := pasuki2.RegisterStart(&form, a.relyingParty, encChal)
+
+	return ctx.JSON(http.StatusOK, op)
 }
 
 func (a *App) RegisterFinish(ctx echo.Context) error {
@@ -161,14 +180,21 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 	}
 
 	c := ctx.Request().Context()
-	r := a.pasuki.RegisterFinish(c, &form)
-	if r.ValidationErr != nil {
-		ctx.Logger().Warn(r.ValidationErr)
+
+	key := fmt.Sprintf("%s:%s", __REDIS_REGISTRATION_CHALLENGE_KEY, form.Email)
+	chal, err := a.redis.GetDel(c, key).Result()
+	if errors.Is(err, redis.Nil) {
+		ctx.Logger().Warn("register challenge not found")
 		return echo.ErrBadRequest
-	}
-	if r.SystemErr != nil {
-		ctx.Logger().Error(r.SystemErr)
+	} else if err != nil {
+		ctx.Logger().Error(err)
 		return echo.ErrInternalServerError
+	}
+
+	r := pasuki2.RegisterFinish(&form, a.relyingPartyIdHash, a.origin, chal)
+	if r.Error != nil {
+		ctx.Logger().Warn(r.Error)
+		return echo.ErrBadRequest
 	}
 
 	passId, err := binid.NewSequential()
@@ -228,14 +254,29 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 }
 
 func (a *App) VerifyStart(ctx echo.Context) error {
-	op, err := a.pasuki.VerifyStart(
-		ctx.Request().Context(),
-		[]byte(__SESSION_PLACEHOLDER),
-	)
+	chal, err := challenge.Gen()
 	if err != nil {
-		ctx.Logger().Warn(err)
+		ctx.Logger().Error(err)
 		return echo.ErrInternalServerError
 	}
+	encChal := base64.RawURLEncoding.EncodeToString(chal)
+
+	key := fmt.Sprintf("%s:%x", __REDIS_VERIFY_CHALLENGE_KEY, []byte(__SESSION_PLACEHOLDER))
+	err = a.redis.SetArgs(
+		ctx.Request().Context(),
+		key,
+		encChal,
+		redis.SetArgs{
+			Mode: "NX",
+			TTL:  time.Millisecond * pasuki2.DEFAULT_TIME_OUT_MIL,
+		},
+	).Err()
+	if err != nil {
+		ctx.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+
+	op := pasuki2.VerifyStart([]byte(__SESSION_PLACEHOLDER), encChal)
 
 	return ctx.JSON(http.StatusOK, op)
 }
@@ -248,10 +289,46 @@ func (a *App) VerifyFinish(ctx echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	r := a.pasuki.VerifyFinish(
-		ctx.Request().Context(),
+	credId, err := base64.RawURLEncoding.DecodeString(form.Id)
+	if err != nil {
+		ctx.Logger().Warn(err)
+		return echo.ErrBadRequest
+	}
+
+	c := ctx.Request().Context()
+
+	passK, err := a.ent.Passkey.Query().
+		Select(passkey.FieldPublicKey).
+		Where(
+			passkey.CredentialID(credId),
+			passkey.DeletedAtIsNil(),
+		).
+		Only(c)
+	if ent.IsNotFound(err) {
+		ctx.Logger().Warn("passkey not found")
+		return echo.ErrBadRequest
+	} else if err != nil {
+		ctx.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+
+	key := fmt.Sprintf("%s:%x", __REDIS_VERIFY_CHALLENGE_KEY, []byte(__SESSION_PLACEHOLDER))
+	encChal, err := a.redis.GetDel(c, key).Result()
+	if errors.Is(err, redis.Nil) {
+		ctx.Logger().Warn("verify challenge not found")
+		return echo.ErrBadRequest
+	} else if err != nil {
+		ctx.Logger().Error(err)
+		return echo.ErrInternalServerError
+	}
+
+	r := pasuki2.VerifyFinish(
 		&form,
 		[]byte(__SESSION_PLACEHOLDER),
+		passK.PublicKey,
+		a.relyingPartyIdHash,
+		a.origin,
+		encChal,
 	)
 	if r.SystemErr != nil {
 		ctx.Logger().Error(r.SystemErr)
@@ -261,9 +338,6 @@ func (a *App) VerifyFinish(ctx echo.Context) error {
 		ctx.Logger().Warn(r.ValidationErr)
 		return echo.ErrBadRequest
 	}
-
-	ctx.Logger().Infof("%#v", r.ClientData)
-	ctx.Logger().Infof("%#v", r.AuthData)
 
 	return ctx.NoContent(http.StatusOK)
 }

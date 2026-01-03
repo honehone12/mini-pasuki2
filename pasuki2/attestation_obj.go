@@ -55,8 +55,8 @@ type ParsedAuthAttestationData struct {
 	CoseKey             CoseKey
 }
 
-func (p2 *Pasuki2) verifyAuthenticatorData(
-	data []byte,
+func verifyAuthenticatorData(
+	data, relyingPartyIdHash []byte,
 	fromGet bool,
 ) (*ParsedAuthAssertionData, int, error) {
 	l := len(data)
@@ -66,7 +66,7 @@ func (p2 *Pasuki2) verifyAuthenticatorData(
 
 	p := RP_ID_HASH_LEN
 	rpIdHash := data[:p]
-	if subtle.ConstantTimeCompare(p2.rpIdHash, rpIdHash) == 0 {
+	if subtle.ConstantTimeCompare(rpIdHash, relyingPartyIdHash) == 0 {
 		return nil, p, errors.New("unexpected rp id hash")
 	}
 
@@ -136,9 +136,8 @@ func parseExtension(p int, data []byte) (map[string]any, int, error) {
 	return extensions, p, nil
 }
 
-func (p2 *Pasuki2) verifyAttestationObject(
-	data []byte,
-	id []byte,
+func verifyAttestationObject(
+	data, relyingPartyIdHash, credentialId []byte,
 ) (*ParsedAttestationObject, error) {
 	att := AttestationObject{}
 	if err := cbor.Unmarshal(data, &att); err != nil {
@@ -150,7 +149,7 @@ func (p2 *Pasuki2) verifyAttestationObject(
 		return nil, errors.New("invalid auth data attestation length")
 	}
 
-	asseD, p, err := p2.verifyAuthenticatorData(att.AuthData, false)
+	asseD, p, err := verifyAuthenticatorData(att.AuthData, relyingPartyIdHash, false)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +163,7 @@ func (p2 *Pasuki2) verifyAttestationObject(
 		return nil, errors.New("auth data is not enough for credential")
 	}
 
-	credentialId := data[p : p+credIdLen]
+	credId := data[p : p+credIdLen]
 	p += credIdLen
 
 	var rawPk cbor.RawMessage
@@ -196,17 +195,17 @@ func (p2 *Pasuki2) verifyAttestationObject(
 		return nil, errors.New("l != p, unexpected data structure")
 	}
 
-	if subtle.ConstantTimeEq(int32(len(id)), int32(len(credentialId))) == 0 {
+	if subtle.ConstantTimeEq(int32(len(credentialId)), int32(len(credId))) == 0 {
 		return nil, errors.New("invalid credential id length")
 	}
-	if subtle.ConstantTimeCompare(id, credentialId) == 0 {
+	if subtle.ConstantTimeCompare(credentialId, credId) == 0 {
 		return nil, errors.New("invalid credential id")
 	}
 
 	d := &ParsedAuthAttestationData{
 		ParsedAuthAssertionData: asseD,
 		Aaguid:                  aaguid,
-		CredentialId:            credentialId,
+		CredentialId:            credId,
 		CredentialPublicKey:     rawPk,
 		CoseKey:                 coseKey,
 	}

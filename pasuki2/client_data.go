@@ -19,10 +19,9 @@ type ParsedClientData struct {
 	TopOrigin   string `json:"topOrigin"`
 }
 
-func (p2 *Pasuki2) verifyClientData(
+func verifyClientData(
 	raw []byte,
-	cachedChal string,
-	datatype string,
+	origin, cachedChal, datatype string,
 ) (*ParsedClientData, error) {
 	clientData := &ParsedClientData{}
 	if err := json.Unmarshal(raw, clientData); err != nil {
@@ -39,7 +38,7 @@ func (p2 *Pasuki2) verifyClientData(
 		return nil, errors.New("unexpected client data type")
 	}
 
-	if clientData.Origin != p2.origin {
+	if clientData.Origin != origin {
 		return nil, errors.New("unexpected client data origin")
 	}
 
