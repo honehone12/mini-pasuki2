@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"mini-pasuki2/binid"
-	"mini-pasuki2/challenge"
 	"mini-pasuki2/ent"
 	"mini-pasuki2/ent/passkey"
 	"mini-pasuki2/ent/user"
@@ -141,7 +140,7 @@ func (a *App) RegisterStart(ctx echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	chal, err := challenge.Gen()
+	chal, err := pasuki2.GenerateChallenge()
 	if err != nil {
 		ctx.Logger().Error(err)
 		return echo.ErrInternalServerError
@@ -253,7 +252,7 @@ func (a *App) RegisterFinish(ctx echo.Context) error {
 }
 
 func (a *App) VerifyStart(ctx echo.Context) error {
-	chal, err := challenge.Gen()
+	chal, err := pasuki2.GenerateChallenge()
 	if err != nil {
 		ctx.Logger().Error(err)
 		return echo.ErrInternalServerError
